@@ -50,8 +50,8 @@
 
 // === ТАЙМАУТЫ И ИНТЕРВАЛЫ (в миллисекундах) ===
 #define AUDIO_BUFFER_SIZE           32768    // Размер буфера (32KB) - баланс между стабильностью и памятью
-#define AUDIO_PREBUFFER_TIME        2000     // Предварительная буферизация перед стартом (2с)
-#define AUDIO_BUFFER_LOW_THRESHOLD  25       // Порог низкого уровня буфера (25% = 8KB)
+#define AUDIO_PREBUFFER_TIME        5000     // Предварительная буферизация перед стартом (5с)
+#define AUDIO_BUFFER_LOW_THRESHOLD  10       // Порог низкого уровня буфера (10% = 3.2KB)
 #define AUDIO_CONNECTION_TIMEOUT    20000    // Таймаут подключения (увеличен)
 #define AUDIO_STATE_DELAY           1000     // Задержка между состояниями аудио
 #define AUDIO_START_TIMEOUT         10000    // Таймаут запуска потока (увеличен)

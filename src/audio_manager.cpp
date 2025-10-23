@@ -345,6 +345,15 @@ bool init_audio_non_blocking() {
                 String safeURL = sanitizeURLForLog(url);
                 log_message(formatString("URL: %s", safeURL.c_str()));
                 
+                // ⚠️ Проверка: HTTPS не поддерживается в AudioFileSourceICYStream
+                if (url.startsWith("https://")) {
+                    log_message("❌ Станция использует HTTPS - не поддерживается!");
+                    show_message("HTTPS protocol", "Not supported");
+                    mark_station_as_unavailable(currentStation);
+                    audioState = AUDIO_ERROR;
+                    return false;
+                }
+                
                 // ⚠️ Проверка формата: AAC не поддерживается
                 if (url.indexOf("-aac-") >= 0 || url.indexOf(".aac") >= 0 || 
                     url.indexOf("/aac") >= 0 || url.indexOf("aac=") >= 0) {
@@ -414,7 +423,6 @@ bool init_audio_non_blocking() {
             int minFill = AUDIO_BUFFER_SIZE * AUDIO_BUFFER_LOW_THRESHOLD / 100;
             if (buff && buff->getFillLevel() > minFill) {
                 audioState = AUDIO_PLAYING;
-                stations[currentStation].isAvailable = true;
                 log_message(formatString("Буфер заполнен (%d / %d), старт!", buff->getFillLevel(), AUDIO_BUFFER_SIZE));
                 reset_inactivity_timer();
                 return true;
@@ -424,7 +432,6 @@ bool init_audio_non_blocking() {
             if (millis() - audioStateTime > AUDIO_PREBUFFER_TIME) {
                 log_message("Таймаут буферизации, запуск несмотря на низкий уровень");
                 audioState = AUDIO_PLAYING;
-                stations[currentStation].isAvailable = true;
                 reset_inactivity_timer();
                 return true;
             }
@@ -445,11 +452,10 @@ bool init_audio_non_blocking() {
     return false;
 }
 
-// Универсальная функция поиска доступной станции
+// Универсальная функция поиска следующей/предыдущей станции
 // direction: 1 = следующая, -1 = предыдущая
 int find_available_station(int direction) {
-    // 🛡️ ЗАЩИТА ОТ RACE CONDITION: захват мьютекса на всю функцию
-    // Так как мы читаем/пишем stations в цикле, нужна атомарность
+    // 🛡️ ЗАЩИТА ОТ RACE CONDITION: захват мьютекса
     STATIONS_LOCK();
     
     if (totalStations == 0) {
@@ -458,68 +464,34 @@ int find_available_station(int direction) {
     }
     if (totalStations == 1) {
         STATIONS_UNLOCK();
-        return 0;  // Только одна станция
+        return 0;
     }
     
-    int attempts = 0;
-    int station = currentStation;
-    
-    do {
-        // Переходим к следующей/предыдущей станции
-        if (direction > 0) {
-            station = (station + 1) % totalStations;
-        } else {
-            station = (station - 1 + totalStations) % totalStations;
-        }
-        attempts++;
-        
-        // Если прошли полный круг - все станции недоступны
-        if (attempts > totalStations) {
-            log_message("⚠️ Все станции недоступны! Сбрасываю флаги.");
-            
-            // Сбрасываем все флаги isAvailable
-            for (int i = 0; i < totalStations; i++) {
-                stations[i].isAvailable = true;
-            }
-            
-            STATIONS_UNLOCK();
-            // ✅ ИСПРАВЛЕНИЕ БАГА: после сброса флагов возвращаем следующую/предыдущую станцию
-            // А не последнюю из цикла (которая может совпадать с currentStation)
-            if (direction > 0) {
-                return (currentStation + 1) % totalStations;
-            } else {
-                return (currentStation - 1 + totalStations) % totalStations;
-            }
-        }
-    } while (!stations[station].isAvailable);
+    int station = (currentStation + direction + totalStations) % totalStations;
     
     STATIONS_UNLOCK();
     return station;
 }
 
 void mark_station_as_unavailable(int stationIndex) {
-    // 🛡️ ЗАЩИТА ОТ RACE CONDITION: захват мьютекса перед изменением stations
+    // ✅ NO-OP: Станции больше НЕ помечаются как недоступные
+    // Просто логируем для информации
     STATIONS_LOCK();
     
-    // 🛡️ Проверка границ массива (bounds check)
     if (stationIndex < 0 || stationIndex >= totalStations) {
         STATIONS_UNLOCK();
-        log_message(formatString("⚠️ Попытка пометить несуществующую станцию: индекс %d", stationIndex));
         return;
     }
     
-    stations[stationIndex].isAvailable = false;
-    String stationName = stations[stationIndex].name; // Копия для лога
-    
+    String stationName = stations[stationIndex].name;
     STATIONS_UNLOCK();
     
-    log_message(formatString("%s помечена как недоступная", stationName.c_str()));
+    log_message(formatString("⚠️ %s недоступна (но остается в списке)", stationName.c_str()));
 }
 
 // 🛡️ Защита от переполнения стека в визуализаторе
 void process_audio_data_for_visualizer(const int16_t *data, int len) {
     // 1. Валидация входных параметров
-    if (data == nullptr || len <= 0) return;
     
     // 2. Проверка свободного стека (min VISUALIZER_MIN_STACK байт)
     // Это критично т.к. функция вызывается из IRAM во время декодирования
