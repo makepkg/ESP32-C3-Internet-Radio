@@ -55,6 +55,9 @@
         @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast.hiding { animation: slideOut 0.3s ease-out forwards; }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
+        /* Preset stations link */
+        .preset-link { color: #4da6ff; text-decoration: none; font-size: 0.85em; font-weight: normal; margin-left: 15px; cursor: pointer; transition: color 0.2s; }
+        .preset-link:hover { color: #ffffff; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -78,7 +81,11 @@
             </div>
 
             <div class="card">
-                <h2><span data-i18n="stations.title">Станции</span> <span id="station-counter" style="color: #888; font-size: 0.8em;">(0/25)</span></h2>
+                <h2>
+                    <span data-i18n="stations.title">Станции</span> 
+                    <span id="station-counter" style="color: #888; font-size: 0.8em;">(0/25)</span>
+                    <a href="#" class="preset-link" onclick="addPresetStations(); return false;" data-i18n="stations.add_preset">Добавить готовые станции</a>
+                </h2>
                 <ul id="station-list" class="station-list"></ul>
                 <div class="station-buttons">
                     <button id="addStationBtn" onclick="showAddForm()" data-i18n="stations.add">Добавить</button>
@@ -206,6 +213,70 @@
     </div>
 
     <script>
+        // 🎵 Предустановленные станции (легко редактировать и расширять)
+        const presetStations = [
+            { name: "Radio Record", url: "http://air.radiorecord.ru:8102/rr_320" },
+            { name: "Energy FM", url: "http://ic7.101.ru:8000/v3_1" },
+            { name: "Jazz FM", url: "http://nashe1.hostingradio.ru/jazz-128.mp3" },
+            { name: "Rock FM", url: "http://nashe1.hostingradio.ru/rock-128.mp3" },
+            { name: "Classic Radio", url: "http://listen.rusongs.ru/ru-mp3-128" },
+            { name: "Dance FM", url: "http://dancefm.hostingradio.ru/dancefm128.mp3" }
+        ];
+
+        // 🔗 Функция добавления предустановленных станций
+        async function addPresetStations() {
+            // Проверяем сколько станций уже есть
+            const response = await apiFetch('/api/stations');
+            const currentStations = await response.json();
+            const currentCount = currentStations.length;
+            const maxStations = 25;
+            const availableSlots = maxStations - currentCount;
+            
+            if (availableSlots <= 0) {
+                const msg = translations[currentLang]['toast.stations_full'] || '❌ Список полон (25/25)';
+                showToast(msg, 3000);
+                return;
+            }
+            
+            // Фильтруем станции которых ещё нет
+            const existingNames = currentStations.map(s => s.name);
+            const stationsToAdd = presetStations.filter(ps => !existingNames.includes(ps.name));
+            
+            if (stationsToAdd.length === 0) {
+                const msg = translations[currentLang]['toast.presets_exist'] || 'ℹ️ Все готовые станции уже добавлены';
+                showToast(msg, 3000);
+                return;
+            }
+            
+            // Ограничиваем количество
+            const toAdd = stationsToAdd.slice(0, availableSlots);
+            
+            // Подтверждение
+            const confirmMsg = `Добавить ${toAdd.length} готовых станций?\n\n${toAdd.map(s => '\u2022 ' + s.name).join('\n')}`;
+            if (!confirm(confirmMsg)) return;
+            
+            // Добавляем по одной
+            let added = 0;
+            for (const station of toAdd) {
+                try {
+                    const res = await apiFetch('/api/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `name=${encodeURIComponent(station.name)}&url=${encodeURIComponent(station.url)}`
+                    });
+                    if (res.ok) added++;
+                } catch (err) {
+                    console.error(`Error adding ${station.name}:`, err);
+                }
+            }
+            
+            // Перезагружаем список
+            loadStations();
+            
+            const msg = translations[currentLang]['toast.presets_added'] || `✅ Добавлено: ${added} станций`;
+            showToast(msg.replace('${added}', added), 2000);
+        }
+
         // ✅ Функция показа уведомления
         function showToast(message, duration = 2000) {
             const toast = document.createElement('div');
@@ -666,7 +737,11 @@
                 'common.applied': 'Применено',
                 'toast.order_saved': '✅ Порядок сохранен!',
                 'toast.error_saving': '❌ Ошибка сохранения',
-                'toast.network_error': '❌ Ошибка сети'
+                'toast.network_error': '❌ Ошибка сети',
+                'stations.add_preset': 'Добавить готовые станции',
+                'toast.stations_full': '❌ Список полон (25/25)',
+                'toast.presets_exist': 'ℹ️ Все готовые станции уже добавлены',
+                'toast.presets_added': '✅ Добавлено: ${added} станций'
             },
             en: {
                 'control.title': 'Control Panel',
@@ -697,7 +772,11 @@
                 'common.applied': 'Applied',
                 'toast.order_saved': '✅ Order saved!',
                 'toast.error_saving': '❌ Error saving',
-                'toast.network_error': '❌ Network error'
+                'toast.network_error': '❌ Network error',
+                'stations.add_preset': 'Add preset stations',
+                'toast.stations_full': '❌ List is full (25/25)',
+                'toast.presets_exist': 'ℹ️ All preset stations already added',
+                'toast.presets_added': '✅ Added: ${added} stations'
             }
         };
 
