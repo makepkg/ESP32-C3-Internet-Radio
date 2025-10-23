@@ -90,7 +90,16 @@ void setup() {
     bool wifi_config_exists = load_wifi_config();
     load_stations_config();
     load_state();
-    save_state();  // Сохраняем инкрементированный rebootCounter
+    
+    // ✅ BOUNDS CHECK: проверяем currentStation после загрузки станций
+    if (totalStations > 0 && currentStation >= totalStations) {
+        log_message(formatString("⚠️ currentStation=%d выходит за границы! Сбрасываем до 0", currentStation));
+        currentStation = 0;
+    } else if (totalStations == 0) {
+        currentStation = 0;
+    }
+    
+    save_state();  // Сохраняем инкрементированный rebootCounter и поправленный currentStation
     
     // Применяем загруженный стиль визуализатора
     visualizerManager.setStyle(visualizerStyle);

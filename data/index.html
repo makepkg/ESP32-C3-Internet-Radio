@@ -50,6 +50,11 @@
         .lang-switch input:checked + .lang-slider { background-color: #bb86fc; }
         .lang-switch input:checked + .lang-slider:before { transform: translateX(26px); }
         .lang-slider:hover { box-shadow: 0 0 8px rgba(187, 134, 252, 0.5); }
+        /* Toast notification */
+        .toast { position: fixed; bottom: 30px; right: 30px; background-color: #48bb78; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: bold; z-index: 9999; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.hiding { animation: slideOut 0.3s ease-out forwards; }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -76,7 +81,6 @@
                 <h2><span data-i18n="stations.title">Станции</span> <span id="station-counter" style="color: #888; font-size: 0.8em;">(0/25)</span></h2>
                 <ul id="station-list" class="station-list"></ul>
                 <div class="station-buttons">
-                    <button onclick="saveOrder()" data-i18n="stations.save">Сохранить порядок</button>
                     <button id="addStationBtn" onclick="showAddForm()" data-i18n="stations.add">Добавить</button>
                 </div>
             </div>
@@ -202,8 +206,28 @@
     </div>
 
     <script>
+        // ✅ Функция показа уведомления
+        function showToast(message, duration = 2000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         let stationListEl = document.getElementById('station-list');
-        let sortable = new Sortable(stationListEl, { animation: 150, handle: '.station-name' });
+        let sortable = new Sortable(stationListEl, {
+            animation: 150,
+            handle: '.station-name',
+            onEnd: function() {
+                // ✅ Автосохранение после drag-n-drop
+                saveOrder();
+            }
+        });
 
         async function apiFetch(url, options) {
             const response = await fetch(url, options);
@@ -385,8 +409,20 @@
         function saveOrder() {
             let orderedNames = Array.from(stationListEl.children).map(li => li.dataset.name).filter(name => name);
             apiFetch('/api/stations/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderedNames) })
-                .then(res => { if (res.ok) alert('Порядок сохранен!'); else alert('Ошибка сохранения порядка'); })
-                .catch(err => console.error(err));
+                .then(res => {
+                    if (res.ok) {
+                        const msg = translations[currentLang]['toast.order_saved'] || '✅ Порядок сохранен!';
+                        showToast(msg);
+                    } else {
+                        const msg = translations[currentLang]['toast.error_saving'] || '❌ Ошибка сохранения';
+                        showToast(msg, 3000);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    const msg = translations[currentLang]['toast.network_error'] || '❌ Ошибка сети';
+                    showToast(msg, 3000);
+                });
         }
 
         document.getElementById('import-form').addEventListener('submit', function(e) {
@@ -608,7 +644,6 @@
                 'control.volume': 'Громкость:',
                 'control.reboot': 'Перезагрузить',
                 'stations.title': 'Станции',
-                'stations.save': 'Сохранить порядок',
                 'stations.add': 'Добавить',
                 'import.title': 'Импорт / Экспорт',
                 'import.export': 'Экспорт',
@@ -628,7 +663,10 @@
                 'settings.danger.title': 'Опасная зона',
                 'settings.danger.description': 'Factory Reset удалит ВСЕ настройки и вернет устройство к заводским настройкам.',
                 'settings.danger.button': 'Factory Reset',
-                'common.applied': 'Применено'
+                'common.applied': 'Применено',
+                'toast.order_saved': '✅ Порядок сохранен!',
+                'toast.error_saving': '❌ Ошибка сохранения',
+                'toast.network_error': '❌ Ошибка сети'
             },
             en: {
                 'control.title': 'Control Panel',
@@ -637,7 +675,6 @@
                 'control.volume': 'Volume:',
                 'control.reboot': 'Reboot',
                 'stations.title': 'Stations',
-                'stations.save': 'Save Order',
                 'stations.add': 'Add',
                 'import.title': 'Import / Export',
                 'import.export': 'Export',
@@ -657,7 +694,10 @@
                 'settings.danger.title': 'Danger Zone',
                 'settings.danger.description': 'Factory Reset will delete ALL settings and return device to factory defaults.',
                 'settings.danger.button': 'Factory Reset',
-                'common.applied': 'Applied'
+                'common.applied': 'Applied',
+                'toast.order_saved': '✅ Order saved!',
+                'toast.error_saving': '❌ Error saving',
+                'toast.network_error': '❌ Network error'
             }
         };
 

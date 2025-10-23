@@ -1,4 +1,4 @@
-#include <AudioFileSourceHTTPStream.h>
+#include <AudioFileSourceICYStream.h>
 #include <AudioFileSourceBuffer.h>
 #include <AudioGeneratorMP3.h>
 #include <AudioOutputI2S.h>
@@ -58,7 +58,7 @@ unsigned long AudioOutputWithVisualizer::last_overflow_warning = 0;
 // --- КОНЕЦ РЕАЛИЗАЦИИ ---
 
 AudioGeneratorMP3 *mp3 = nullptr;
-AudioFileSourceHTTPStream *file = nullptr;
+AudioFileSourceICYStream *file = nullptr;
 AudioFileSourceBuffer *buff = nullptr;
 AudioOutputWithVisualizer *out_with_visualizer = nullptr;
 
@@ -72,11 +72,29 @@ unsigned long audioStateTime = 0;
 std::atomic<bool> audio_decoding_active(false);
 
 // 🚫 Защита от повторных вызовов next_station во время переключения
-static bool isChangingStation = false;
+// ✅ ATOMIC для защиты от race condition при быстром переключении
+std::atomic<bool> isChangingStation(false);
 
 // ⚠️ Статус инициализации I2S
 static bool i2sInitialized = false;
 static unsigned long lastI2SInitAttempt = 0;
+
+// ✅ Callback для отладки ошибок стриминга
+void AudioStatusCallback(void *cbData, int code, const char *string) {
+    const char *source = reinterpret_cast<const char *>(cbData);
+    static uint32_t lastLogTime = 0;
+    static int lastCode = -99999;
+    uint32_t now = millis();
+    
+    // Дедупликация: логируем только при смене кода или раз в секунду
+    if ((lastCode != code) || (now - lastLogTime > 1000)) {
+        char msgBuf[128];
+        snprintf(msgBuf, sizeof(msgBuf), "🔊 AUDIO(%s) code=%d: %s", source, code, string);
+        log_message(msgBuf);
+        lastLogTime = now;
+        lastCode = code;
+    }
+}
 
 void cleanup_audio();
 bool init_audio_non_blocking();
@@ -135,6 +153,9 @@ void IRAM_ATTR loop_audio() {
     // 📶 Don't start audio while IP display is active
     if (is_ip_display_active()) return;
     
+    // ✅ Don't process audio while changing station (prevents crash)
+    if (isChangingStation.load(std::memory_order_acquire)) return;
+    
     // ⚠️ Проверка инициализации и попытка восстановления I2S
     try_reinit_i2s();
     if (!i2sInitialized) return; // I2S не готов, пропускаем аудио
@@ -180,9 +201,13 @@ void IRAM_ATTR loop_audio() {
 }
 
 void IRAM_ATTR next_station() {
-    if (stations.empty() || isChangingStation) return;
+    if (stations.empty()) return;
     
-    isChangingStation = true;  // 🚫 Защита от повторных вызовов
+    // ✅ Атомарная проверка и установка - защита от race condition
+    bool expected = false;
+    if (!isChangingStation.compare_exchange_strong(expected, true)) {
+        return;  // Уже идет смена станции
+    }
     
     audioState = AUDIO_IDLE;
     cleanup_audio();
@@ -195,13 +220,17 @@ void IRAM_ATTR next_station() {
     reset_inactivity_timer();
     audioState = AUDIO_IDLE;
     
-    isChangingStation = false;  // Снимаем блокировку
+    isChangingStation.store(false, std::memory_order_release);  // ✅ Снимаем блокировку атомарно
 }
 
 void IRAM_ATTR previous_station() {
-    if (stations.empty() || isChangingStation) return;
+    if (stations.empty()) return;
     
-    isChangingStation = true;  // 🚫 Защита от повторных вызовов
+    // ✅ Атомарная проверка и установка - защита от race condition
+    bool expected = false;
+    if (!isChangingStation.compare_exchange_strong(expected, true)) {
+        return;  // Уже идет смена станции
+    }
     
     audioState = AUDIO_IDLE;
     cleanup_audio();
@@ -214,7 +243,7 @@ void IRAM_ATTR previous_station() {
     reset_inactivity_timer();
     audioState = AUDIO_IDLE;
     
-    isChangingStation = false;  // Снимаем блокировку
+    isChangingStation.store(false, std::memory_order_release);  // ✅ Снимаем блокировку атомарно
 }
 
 void IRAM_ATTR set_volume(float new_volume) {
@@ -231,11 +260,18 @@ void force_audio_reset() {
 }
 
 void cleanup_audio() {
+    // ✅ Безопасная остановка MP3 декодера
     if (mp3) {
-        mp3->stop();
+        // Останавливаем и ждем завершения текущего loop()
+        if (mp3->isRunning()) {
+            mp3->stop();
+            delay(20);  // Даем время завершить декодирование
+        }
         delete mp3;
         mp3 = nullptr;
     }
+    
+    // Очищаем буфер и файл
     if (buff) {
         delete buff;
         buff = nullptr;
@@ -309,12 +345,42 @@ bool init_audio_non_blocking() {
                 String safeURL = sanitizeURLForLog(url);
                 log_message(formatString("URL: %s", safeURL.c_str()));
                 
-                file = new AudioFileSourceHTTPStream(url.c_str());
+                // ⚠️ Проверка формата: AAC не поддерживается
+                if (url.indexOf("-aac-") >= 0 || url.indexOf(".aac") >= 0 || 
+                    url.indexOf("/aac") >= 0 || url.indexOf("aac=") >= 0) {
+                    log_message("❌ Станция в формате AAC - не поддерживается!");
+                    show_message("AAC format", "Not supported");
+                    mark_station_as_unavailable(currentStation);
+                    audioState = AUDIO_ERROR;
+                    return false;
+                }
+                
+                // ✅ Используем ICYStream для лучшей совместимости с радио-серверами
+                file = new AudioFileSourceICYStream();
                 if (file) {
+                    // ✅ HTTP/1.0 для старых серверов (критично!)
+                    file->useHTTP10();
+                    
+                    // ✅ Регистрируем callback для отладки
+                    file->RegisterStatusCB(AudioStatusCallback, (void*)"stream");
+                    
+                    // Открываем поток
+                    if (!file->open(url.c_str())) {
+                        log_message("❌ Не удалось открыть поток");
+                        delete file;
+                        file = nullptr;
+                        audioState = AUDIO_ERROR;
+                        return false;
+                    }
+                    
+                    // ✅ Создаем буфер (оптимально для стриминга)
                     buff = new AudioFileSourceBuffer(file, AUDIO_BUFFER_SIZE);
                     if (buff) {
+                        buff->RegisterStatusCB(AudioStatusCallback, (void*)"buffer");
+                        
                         mp3 = new AudioGeneratorMP3();
                         if (mp3) {
+                            mp3->RegisterStatusCB(AudioStatusCallback, (void*)"mp3");
                             audioState = AUDIO_STARTING;
                             audioStateTime = millis();
                         }
@@ -344,8 +410,9 @@ bool init_audio_non_blocking() {
             
         case AUDIO_BUFFERING: {
             // Ждём заполнения буфера перед стартом
-            if (buff && buff->getFillLevel() > AUDIO_BUFFER_SIZE * AUDIO_BUFFER_LOW_THRESHOLD / 100) {
-                // Буфер заполнен на 20% - можно начинать
+            // ✅ Ждем AUDIO_BUFFER_LOW_THRESHOLD% заполнения
+            int minFill = AUDIO_BUFFER_SIZE * AUDIO_BUFFER_LOW_THRESHOLD / 100;
+            if (buff && buff->getFillLevel() > minFill) {
                 audioState = AUDIO_PLAYING;
                 stations[currentStation].isAvailable = true;
                 log_message(formatString("Буфер заполнен (%d / %d), старт!", buff->getFillLevel(), AUDIO_BUFFER_SIZE));

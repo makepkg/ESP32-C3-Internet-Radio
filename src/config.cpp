@@ -137,7 +137,10 @@ bool load_stations_config() {
         });
     }
     totalStations = stations.size();
-    Serial.println("Конфигурация станций загружена.");
+    Serial.printf("✅ Загружено %d станций в порядке:\n", totalStations);
+    for (size_t i = 0; i < stations.size(); i++) {
+        Serial.printf("  %d. %s\n", i, stations[i].name.c_str());
+    }
     return true;
 }
 
@@ -188,7 +191,8 @@ bool load_state() {
     }
 
     volume = doc["volume"] | VOLUME_DEFAULT;
-    currentStation = doc["station"] | 0;
+    // ✅ НЕ загружаем currentStation - всегда начинаем с первой станции (0)
+    currentStation = 0;
     displayRotation = doc["displayRotation"] | 2; // default: 2 (flipped)
     visualizerStyle = (VisualizerStyle)(doc["visualizerStyle"] | STYLE_BARS);
     
@@ -227,7 +231,8 @@ void save_state() {
 
     JsonDocument doc;
     doc["volume"] = volume;
-    doc["station"] = currentStation;
+    // ✅ НЕ сохраняем currentStation - всегда начинаем с первой станции
+    // doc["station"] = currentStation; // REMOVED
     doc["displayRotation"] = displayRotation;
     doc["visualizerStyle"] = (int)visualizerStyle;
     doc["sessionToken"] = sessionToken;

@@ -681,6 +681,19 @@ void start_web_server_sta() {
         if (ordered_stations.size() == stations.size()) {
             stations = ordered_stations;
             STATIONS_UNLOCK();
+            
+            // ✅ Останавливаем аудио и сбрасываем на первую станцию
+            force_audio_reset();
+            currentStation = 0;
+            
+            // 📝 Логируем новый порядок
+            Serial.println("♻️ Порядок станций изменен:");
+            STATIONS_LOCK();
+            for (size_t i = 0; i < stations.size(); i++) {
+                Serial.printf("  %d. %s\n", i, stations[i].name.c_str());
+            }
+            STATIONS_UNLOCK();
+            
             sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "Order saved");
         } else {

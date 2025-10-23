@@ -49,9 +49,9 @@
 #define I2S_DOUT     6
 
 // === ТАЙМАУТЫ И ИНТЕРВАЛЫ (в миллисекундах) ===
-#define AUDIO_BUFFER_SIZE           131072   // Размер буфера (128KB) - увеличен для слабого WiFi
+#define AUDIO_BUFFER_SIZE           32768    // Размер буфера (32KB) - баланс между стабильностью и памятью
 #define AUDIO_PREBUFFER_TIME        2000     // Предварительная буферизация перед стартом (2с)
-#define AUDIO_BUFFER_LOW_THRESHOLD  20       // Порог низкого уровня буфера (20%)
+#define AUDIO_BUFFER_LOW_THRESHOLD  25       // Порог низкого уровня буфера (25% = 8KB)
 #define AUDIO_CONNECTION_TIMEOUT    20000    // Таймаут подключения (увеличен)
 #define AUDIO_STATE_DELAY           1000     // Задержка между состояниями аудио
 #define AUDIO_START_TIMEOUT         10000    // Таймаут запуска потока (увеличен)
