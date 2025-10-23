@@ -56,7 +56,7 @@
         .toast.hiding { animation: slideOut 0.3s ease-out forwards; }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
         /* Preset stations link */
-        .preset-link { color: #4da6ff; text-decoration: none; font-size: 0.85em; font-weight: normal; margin-left: 15px; cursor: pointer; transition: color 0.2s; }
+        .preset-link { color: #4da6ff; text-decoration: none; font-size: 0.75em; font-weight: normal; cursor: pointer; transition: color 0.2s; display: block; text-align: right; margin-top: 8px; margin-bottom: 12px; }
         .preset-link:hover { color: #ffffff; text-decoration: underline; }
     </style>
 </head>
@@ -84,8 +84,8 @@
                 <h2>
                     <span data-i18n="stations.title">Станции</span> 
                     <span id="station-counter" style="color: #888; font-size: 0.8em;">(0/25)</span>
-                    <a href="#" class="preset-link" onclick="addPresetStations(); return false;" data-i18n="stations.add_preset">Добавить готовые станции</a>
                 </h2>
+                <a href="#" class="preset-link" onclick="addPresetStations(); return false;" data-i18n="stations.add_preset">Добавить готовые станции</a>
                 <ul id="station-list" class="station-list"></ul>
                 <div class="station-buttons">
                     <button id="addStationBtn" onclick="showAddForm()" data-i18n="stations.add">Добавить</button>
@@ -215,12 +215,12 @@
     <script>
         // 🎵 Предустановленные станции (легко редактировать и расширять)
         const presetStations = [
-            { name: "Radio Record", url: "http://air.radiorecord.ru:8102/rr_320" },
             { name: "Energy FM", url: "http://ic7.101.ru:8000/v3_1" },
-            { name: "Jazz FM", url: "http://nashe1.hostingradio.ru/jazz-128.mp3" },
-            { name: "Rock FM", url: "http://nashe1.hostingradio.ru/rock-128.mp3" },
-            { name: "Classic Radio", url: "http://listen.rusongs.ru/ru-mp3-128" },
-            { name: "Dance FM", url: "http://dancefm.hostingradio.ru/dancefm128.mp3" }
+            { name: "etape-me", url: "http://streamer.radio.co/sa77362e5f/listen" },
+            { name: "badradio", url: "http://s2.radio.co/s2b2b68744/listen" },
+            { name: "60s Jazz", url: "http://us2.internet-radio.com/proxy/megatoncafe?mp=/stream;" },
+            { name: "977-Radio-60s", url: "http://27273.live.streamtheworld.com/977_OLDIES_SC?dist=onlineradiobox" },
+            { name: "Rammstein", url: "http://radio21.streamabc.net/radio21-rammstein-mp3-256-6531580?sABC=68s49qo4#0#6601sn7p21o6p0o2sr6o2qrrq26s4r4n#cubabfgne&aw_0_1st.playerid=phonostar&amsparams=playerid:phonostar;skey:1760861620" }
         ];
 
         // 🔗 Функция добавления предустановленных станций
