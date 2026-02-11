@@ -1057,7 +1057,7 @@ PlatformIO: Clean                ← Clean (if errors)
 
 ```bash
 # Clone repository
-git clone https://github.com/Unix-like-SoN/ESP32-C3-Internet-Radio.git
+git clone https://github.com/makepkg/ESP32-C3-Internet-Radio.git
 cd ESP32-C3-Internet-Radio
 
 # ⚠️ TWO COMMANDS REQUIRED!
@@ -1134,7 +1134,7 @@ C:\Users\<Name>\AppData\Roaming\Python\PythonXX\Scripts
 
 ```bash
 # Clone project
-git clone https://github.com/Unix-like-SoN/ESP32-C3-Internet-Radio.git
+git clone https://github.com/makepkg/ESP32-C3-Internet-Radio.git
 cd ESP32-C3-Internet-Radio
 
 # Connect ESP32 via USB
@@ -1304,11 +1304,11 @@ Your support is very important and helps me continue working on open-source proj
 **⭐ Star this repository** if you find it useful!
 
 **🔗 Check out my other projects:**
-- [ESP32-T-Display-TOTP](https://github.com/Unix-like-SoN/ESP32-T-Display-TOTP) - TOTP Authenticator on ESP32
+- [ESP32-T-Display-TOTP](https://github.com/makepkg/ESP32-T-Display-TOTP) - TOTP Authenticator on ESP32
 
 ---
 
 **Version:** v4.5 (Stable Architecture)  
 **Last Update:** 2025-10-15  
 **License:** MIT  
-**Author:** [Unix-like-SoN](https://github.com/Unix-like-SoN)
+**Author:** [makepkg](https://github.com/makepkg)

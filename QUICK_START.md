@@ -20,7 +20,7 @@
 pip3 install platformio
 
 # Flash
-git clone https://github.com/Unix-like-SoN/ESP32-C3-Internet-Radio.git
+git clone https://github.com/makepkg/ESP32-C3-Internet-Radio.git
 cd ESP32-C3-Internet-Radio
 pio run --target upload     # 1. Code
 pio run --target uploadfs   # 2. Web interface
