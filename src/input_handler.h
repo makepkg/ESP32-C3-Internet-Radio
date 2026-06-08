@@ -5,4 +5,4 @@ void setup_input();
 void loop_input();
 void force_save_volume();  // Принудительное сохранение громкости (при shutdown)
 
-#endif // INPUT_HANDLER_H
+#endif  // INPUT_HANDLER_H

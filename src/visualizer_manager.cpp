@@ -1,16 +1,16 @@
 #include "visualizer_manager.h"
+
 #include "visualizers/visualizer_bars.h"
-#include "visualizers/visualizer_wave.h"
 #include "visualizers/visualizer_circle.h"
 #include "visualizers/visualizer_hexagon.h"
-#include "visualizers/visualizer_stars.h"
-#include "visualizers/visualizer_mirror.h"
-#include "visualizers/visualizer_lightning.h"
-#include "visualizers/visualizer_tesseract.h"
-#include "visualizers/visualizer_plasma.h"
 #include "visualizers/visualizer_holo_grid.h"
+#include "visualizers/visualizer_lightning.h"
+#include "visualizers/visualizer_mirror.h"
 #include "visualizers/visualizer_omni_scan.h"
-
+#include "visualizers/visualizer_plasma.h"
+#include "visualizers/visualizer_stars.h"
+#include "visualizers/visualizer_tesseract.h"
+#include "visualizers/visualizer_wave.h"
 
 // Глобальный экземпляр
 VisualizerManager visualizerManager;
@@ -35,7 +35,7 @@ VisualizerManager::~VisualizerManager() {
 VisualizerBase* VisualizerManager::getVisualizer(VisualizerStyle style) {
     // Lazy initialization - создаем визуализатор только при первом обращении
     if (!visualizers[style]) {
-        switch(style) {
+        switch (style) {
             case STYLE_BARS:
                 visualizers[style] = new VisualizerBars();
                 break;
@@ -93,18 +93,30 @@ const char* VisualizerManager::getCurrentStyleName() {
 }
 
 const char* VisualizerManager::getStyleName(VisualizerStyle style) {
-    switch(style) {
-        case STYLE_BARS: return "Bars";
-        case STYLE_WAVE: return "Wave";
-        case STYLE_CIRCLE: return "Circle";
-        case STYLE_HEXAGON: return "Hexagon";
-        case STYLE_STARS: return "Stars";
-        case STYLE_MIRROR: return "Mirror";
-        case STYLE_LIGHTNING: return "Lightning";
-        case STYLE_TESSERACT: return "Tesseract";
-        case STYLE_PLASMA: return "Plasma";
-        case STYLE_HOLO_GRID: return "Holo Grid";
-        case STYLE_OMNI_SCAN: return "Omni Scan";
-        default: return "Unknown";
+    switch (style) {
+        case STYLE_BARS:
+            return "Bars";
+        case STYLE_WAVE:
+            return "Wave";
+        case STYLE_CIRCLE:
+            return "Circle";
+        case STYLE_HEXAGON:
+            return "Hexagon";
+        case STYLE_STARS:
+            return "Stars";
+        case STYLE_MIRROR:
+            return "Mirror";
+        case STYLE_LIGHTNING:
+            return "Lightning";
+        case STYLE_TESSERACT:
+            return "Tesseract";
+        case STYLE_PLASMA:
+            return "Plasma";
+        case STYLE_HOLO_GRID:
+            return "Holo Grid";
+        case STYLE_OMNI_SCAN:
+            return "Omni Scan";
+        default:
+            return "Unknown";
     }
 }

@@ -1,21 +1,22 @@
-#include "config.h"
-#include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 #include <mbedtls/md.h>
+
+#include "config.h"
 
 // === ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: SHA256 хеширование ===
 String sha256Hash(const String& input) {
     byte hash[32];
     mbedtls_md_context_t ctx;
     mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
-    
+
     mbedtls_md_init(&ctx);
     mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
     mbedtls_md_starts(&ctx);
     mbedtls_md_update(&ctx, (const unsigned char*)input.c_str(), input.length());
     mbedtls_md_finish(&ctx, hash);
     mbedtls_md_free(&ctx);
-    
+
     // Конвертируем в HEX строку
     String hashString = "";
     for (int i = 0; i < 32; i++) {
@@ -48,7 +49,7 @@ bool load_credentials() {
 
     webCredentials.username = doc["username"].as<String>();
     webCredentials.passwordHash = doc["passwordHash"].as<String>();
-    
+
     Serial.println("Учетные данные загружены.");
     return true;
 }
@@ -81,11 +82,11 @@ bool save_credentials(const String& username, const String& password) {
     }
 
     configFile.close();
-    
+
     // Обновляем глобальные переменные
     webCredentials.username = username;
     webCredentials.passwordHash = passwordHash;
-    
+
     Serial.println("Учетные данные сохранены.");
     return true;
 }
@@ -97,6 +98,6 @@ bool verify_credentials(const String& username, const String& password) {
     }
 
     String passwordHash = sha256Hash(password);
-    
+
     return (username == webCredentials.username && passwordHash == webCredentials.passwordHash);
 }

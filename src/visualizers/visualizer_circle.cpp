@@ -1,15 +1,16 @@
 #include "visualizer_circle.h"
+
 #include "../trig_tables.h"
 
 void IRAM_ATTR VisualizerCircle::draw(Adafruit_SSD1306& display, int* bands, int bandCount) {
     const int centerX = SCREEN_WIDTH / 2;   // 64
     const int centerY = SCREEN_HEIGHT / 2;  // 16
-    
+
     // Максимальный радиус - до края экрана (по диагонали)
     // sqrt(64^2 + 16^2) ≈ 66, округляем до 70 для запаса
     const int maxRadius = 70;
     const int minRadius = 3;
-    
+
     // Сглаживание с быстрой атакой и плавным затуханием
     for (int i = 0; i < bandCount; i++) {
         int target = bands[i];
@@ -21,27 +22,27 @@ void IRAM_ATTR VisualizerCircle::draw(Adafruit_SSD1306& display, int* bands, int
             smoothedBands[i] = max(0, smoothedBands[i] - 3);
         }
     }
-    
+
     // Рисуем лучи из центра (без float!)
     for (int i = 0; i < bandCount; i++) {
         // Индекс для lookup таблицы (0-15)
         int angleIdx = (i * 16) / bandCount;
-        
+
         // Нормализуем амплитуду
         int radius = map(smoothedBands[i], 0, SCREEN_HEIGHT, minRadius, maxRadius);
         radius = constrain(radius, minRadius, maxRadius);
-        
+
         // Координаты через lookup таблицы (fixed-point * 256)
         int endX = centerX + ((radius * fast_cos(angleIdx)) >> 8);
         int endY = centerY + ((radius * fast_sin(angleIdx)) >> 8);
-        
+
         // Ограничиваем
         endX = constrain(endX, 0, SCREEN_WIDTH - 1);
         endY = constrain(endY, 0, SCREEN_HEIGHT - 1);
-        
+
         // Рисуем основной луч
         display.drawLine(centerX, centerY, endX, endY, SSD1306_WHITE);
-        
+
         // Свечение (соседний луч)
         if (radius > maxRadius / 2 && angleIdx < 15) {
             int endX2 = centerX + ((radius * fast_cos(angleIdx + 1)) >> 8);
@@ -51,7 +52,7 @@ void IRAM_ATTR VisualizerCircle::draw(Adafruit_SSD1306& display, int* bands, int
             display.drawLine(centerX, centerY, endX2, endY2, SSD1306_WHITE);
         }
     }
-    
+
     // Рисуем пульсирующую центральную точку (зависит от средней амплитуды)
     long totalAmp = 0;
     for (int i = 0; i < bandCount; i++) {

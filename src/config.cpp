@@ -1,9 +1,11 @@
 #include "config.h"
+
+#include <ArduinoJson.h>
+#include <LittleFS.h>
+#include <mbedtls/md.h>
+
 #include "audio_manager.h"
 #include "display_manager.h"
-#include <LittleFS.h>
-#include <ArduinoJson.h>
-#include <mbedtls/md.h>
 
 // Глобальные переменные для хранения конфигураций
 WiFiCredentials wifiConfig;  // Одна WiFi сеть
@@ -16,7 +18,7 @@ SemaphoreHandle_t stationsMutex = nullptr;
 
 // Настройки визуализатора и дисплея
 VisualizerStyle visualizerStyle = STYLE_BARS;
-uint8_t displayRotation = 2; // По умолчанию flipped
+uint8_t displayRotation = 2;  // По умолчанию flipped
 
 // Сессия и автологин
 String sessionToken = "";
@@ -32,7 +34,7 @@ void setup_filesystem() {
         ESP.restart();
     }
     Serial.println("✅ stationsMutex создан успешно");
-    
+
     if (!LittleFS.begin()) {
         Serial.println("Ошибка монтирования LittleFS!");
         Serial.println("Форматирование...");
@@ -55,7 +57,7 @@ bool load_wifi_config() {
         Serial.println("Файл wifi.json не найден. Запуск в режиме AP.");
         wifiConfig.ssid = "";
         wifiConfig.password = "";
-        return false; // Нет конфига - запускаем AP mode
+        return false;  // Нет конфига - запускаем AP mode
     }
 
     JsonDocument doc;
@@ -75,12 +77,12 @@ bool load_wifi_config() {
     wifiConfig.fallbackSsid = obj["fallback_ssid"] | String("");
     wifiConfig.fallbackPassword = obj["fallback_password"] | String("");
     wifiConfig.fallbackEnabled = obj["fallback_enabled"] | false;
-    
+
     if (wifiConfig.ssid.isEmpty()) {
         Serial.println("Пустой SSID в wifi.json");
         return false;
     }
-    
+
     Serial.println("Конфигурация WiFi загружена: " + wifiConfig.ssid);
     return true;
 }
@@ -94,7 +96,7 @@ bool save_wifi_config() {
 
     JsonDocument doc;
     JsonObject obj = doc.to<JsonObject>();
-    
+
     obj["ssid"] = wifiConfig.ssid;
     obj["password"] = wifiConfig.password;
     obj["fallback_ssid"] = wifiConfig.fallbackSsid;
@@ -120,7 +122,7 @@ bool load_stations_config() {
         Serial.println("Файл stations.json не найден. Список станций пуст.");
         stations.clear();
         totalStations = 0;
-        return false; // Нет конфига - список пуст
+        return false;  // Нет конфига - список пуст
     }
 
     JsonDocument doc;
@@ -137,9 +139,8 @@ bool load_stations_config() {
     stations.clear();
     for (JsonObject obj : array) {
         stations.push_back({
-            obj["name"].as<String>(),
-            obj["url"].as<String>(),
-            true // isAvailable всегда true при загрузке
+            obj["name"].as<String>(), obj["url"].as<String>(),
+            true  // isAvailable всегда true при загрузке
         });
     }
     totalStations = stations.size();
@@ -199,32 +200,33 @@ bool load_state() {
     volume = doc["volume"] | VOLUME_DEFAULT;
     // ✅ НЕ загружаем currentStation - всегда начинаем с первой станции (0)
     currentStation = 0;
-    displayRotation = doc["displayRotation"] | 2; // default: 2 (flipped)
+    displayRotation = doc["displayRotation"] | 2;  // default: 2 (flipped)
     visualizerStyle = (VisualizerStyle)(doc["visualizerStyle"] | STYLE_BARS);
-    
+
     // Загружаем сессию и счетчик перезагрузок
     sessionToken = doc["sessionToken"] | "";
     rebootCounter = doc["rebootCounter"] | 0;
-    
+
     if (sessionToken.length() > 0) {
         Serial.printf("🔑 Session token загружен: %s...\n", sessionToken.substring(0, 8).c_str());
     } else {
         Serial.println("❌ Session token отсутствует.");
     }
-    
+
     // Инкрементируем счетчик перезагрузок
     rebootCounter++;
-    
+
     // Каждые 25 перезагрузок - очищаем сессию
     if (rebootCounter >= 25) {
         Serial.println("❗ 25 перезагрузок - очистка сессии!");
         sessionToken = "";
         rebootCounter = 0;
     }
-    
+
     // НЕ сохраняем здесь! Сохранение в main.cpp после setup
-    
-    Serial.printf("Состояние загружено: Громкость=%.2f, Станция=%d, Поворот=%d, Стиль=%d, Reboot=%d/25\n", volume, currentStation, displayRotation, visualizerStyle, rebootCounter);
+
+    Serial.printf("Состояние загружено: Громкость=%.2f, Станция=%d, Поворот=%d, Стиль=%d, Reboot=%d/25\n", volume,
+                  currentStation, displayRotation, visualizerStyle, rebootCounter);
     return true;
 }
 

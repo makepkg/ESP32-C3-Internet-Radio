@@ -1,9 +1,11 @@
 #include "log_manager.h"
-#include "string_utils.h"
+
 #include <LittleFS.h>
 
+#include "string_utils.h"
+
 #define LOG_FILE "/log.txt"
-#define MAX_LOG_SIZE 20480  // 20KB - максимальный размер лог-файла
+#define MAX_LOG_SIZE 20480     // 20KB - максимальный размер лог-файла
 #define MAX_LOG_RESPONSE 8192  // 8KB - максимум для веб-ответа
 
 void setup_logging() {
@@ -46,25 +48,25 @@ String get_logs() {
     if (!logFile) {
         return "Логи отсутствуют.";
     }
-    
+
     size_t fileSize = logFile.size();
-    
+
     // Если файл большой - читаем только последние 8KB
     if (fileSize > MAX_LOG_RESPONSE) {
         logFile.seek(fileSize - MAX_LOG_RESPONSE);
         // Пропускаем неполную первую строку
         logFile.readStringUntil('\n');
     }
-    
+
     String logs = logFile.readString();
     logFile.close();
-    
+
     // Добавляем инфо если логи были обрезаны
     if (fileSize > MAX_LOG_RESPONSE) {
         char truncMsg[64];
         snprintf(truncMsg, sizeof(truncMsg), "[...обрезано %dKB...]\n", (fileSize - MAX_LOG_RESPONSE) / 1024);
-        logs = String(truncMsg) + logs; // Одна конкатенация вместо трех
+        logs = String(truncMsg) + logs;  // Одна конкатенация вместо трех
     }
-    
+
     return logs;
 }

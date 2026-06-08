@@ -7,8 +7,10 @@ void IRAM_ATTR VisualizerOmniScan::draw(Adafruit_SSD1306& display, int* bands, i
     int avgAmp = totalAmp / bandCount;
 
     // Сглаживание
-    if (avgAmp > smoothAmp) smoothAmp = avgAmp;
-    else smoothAmp = (smoothAmp * 3 + avgAmp) / 4;
+    if (avgAmp > smoothAmp)
+        smoothAmp = avgAmp;
+    else
+        smoothAmp = (smoothAmp * 3 + avgAmp) / 4;
 
     // === Скролл буфера влево на 1 пиксель ===
     scrollTimer++;

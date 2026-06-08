@@ -9,18 +9,18 @@
 /**
  * Создание строки с форматированием (как sprintf но для String)
  * Предварительно выделяет память, минимизируя фрагментацию
- * 
+ *
  * @param format Формат строки (как в printf)
  * @param ... Аргументы для форматирования
  * @return Отформатированная String
- * 
+ *
  * Пример: formatString("WiFi: %s (%d dBm)", ip.c_str(), rssi)
  */
 String formatString(const char* format, ...);
 
 /**
  * Безопасная конкатенация двух строк с предварительным выделением памяти
- * 
+ *
  * @param str1 Первая строка
  * @param str2 Вторая строка
  * @return Объединенная строка
@@ -50,13 +50,13 @@ inline String concatOptimized(const String& str1, const String& str2, const Stri
  * Оптимизирована для частых вызовов
  */
 inline String intToString(int value) {
-    char buffer[12]; // Достаточно для int32_t (-2147483648 = 11 символов + \0)
+    char buffer[12];  // Достаточно для int32_t (-2147483648 = 11 символов + \0)
     snprintf(buffer, sizeof(buffer), "%d", value);
     return String(buffer);
 }
 
 inline String floatToString(float value, int decimals = 2) {
-    char buffer[16]; // Достаточно для float
+    char buffer[16];  // Достаточно для float
     snprintf(buffer, sizeof(buffer), "%.*f", decimals, value);
     return String(buffer);
 }
@@ -67,7 +67,7 @@ inline String floatToString(float value, int decimals = 2) {
  */
 inline String jsonField(const char* key, int value) {
     String result;
-    result.reserve(strlen(key) + 20); // key + {"":12345}\0
+    result.reserve(strlen(key) + 20);  // key + {"":12345}\0
     result = "{\"";
     result += key;
     result += "\":";
@@ -78,7 +78,7 @@ inline String jsonField(const char* key, int value) {
 
 inline String jsonField(const char* key, const String& value) {
     String result;
-    result.reserve(strlen(key) + value.length() + 10); // key + {"":""}\0
+    result.reserve(strlen(key) + value.length() + 10);  // key + {"":""}\0
     result = "{\"";
     result += key;
     result += "\":\"";
@@ -87,4 +87,4 @@ inline String jsonField(const char* key, const String& value) {
     return result;
 }
 
-#endif // STRING_UTILS_H
+#endif  // STRING_UTILS_H

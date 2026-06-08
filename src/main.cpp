@@ -1,28 +1,29 @@
 #include <Arduino.h>
-#include "wifi_manager.h"
+
 #include "audio_manager.h"
+#include "config.h"
 #include "display_manager.h"
-#include "web_server_manager.h"
 #include "input_handler.h"
-#include "system_manager.h"
 #include "log_manager.h"
 #include "string_utils.h"
-#include "config.h"
+#include "system_manager.h"
+#include "web_server_manager.h"
+#include "wifi_manager.h"
 
 // === ПОТОКОБЕЗОПАСНАЯ СИСТЕМА КОМАНД (FreeRTOS Queue) ===
 // Типы команд от веб-интерфейса
 enum CommandType {
     CMD_NONE = 0,
-    CMD_VOLUME,          // Изменить громкость
-    CMD_NEXT_STATION,    // Следующая станция
-    CMD_PREV_STATION,    // Предыдущая станция
-    CMD_REBOOT,          // Перезагрузка
-    CMD_SAVE_STATIONS    // Сохранить конфигурацию станций
+    CMD_VOLUME,        // Изменить громкость
+    CMD_NEXT_STATION,  // Следующая станция
+    CMD_PREV_STATION,  // Предыдущая станция
+    CMD_REBOOT,        // Перезагрузка
+    CMD_SAVE_STATIONS  // Сохранить конфигурацию станций
 };
 
 struct SystemCommand {
     CommandType type;
-    float floatValue;    // Для CMD_VOLUME
+    float floatValue;  // Для CMD_VOLUME
 };
 
 // Очередь команд (потокобезопасная)
@@ -33,11 +34,11 @@ QueueHandle_t commandQueue = nullptr;
 
 bool sendCommand(CommandType type, float value = 0.0f) {
     if (commandQueue == nullptr) return false;
-    
+
     SystemCommand cmd;
     cmd.type = type;
     cmd.floatValue = value;
-    
+
     // Попытка отправить команду в очередь (без ожидания)
     BaseType_t result = xQueueSend(commandQueue, &cmd, 0);
     return (result == pdTRUE);
@@ -67,30 +68,30 @@ bool sendSaveStationsCommand() {
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
     delay(SERIAL_INIT_DELAY);
-    
+
     // ⚡ ПЕРВЫМ ДЕЛОМ: Проверка стабильности питания
     // ЭТО КРИТИЧНО! Должно быть ДО всех остальных инициализаций
     check_power_stability();
-    
+
     setup_filesystem();
-    setup_logging(); // Инициализируем и очищаем логи
-    
+    setup_logging();  // Инициализируем и очищаем логи
+
     // Инициализация очереди команд FreeRTOS
     commandQueue = xQueueCreate(COMMAND_QUEUE_SIZE, sizeof(SystemCommand));
     if (commandQueue == nullptr) {
         Serial.println("❌ ОШИБКА: Не удалось создать очередь команд!");
     }
-    
+
     log_message("ESP32-C3 Радио v4.5 (Stable Arch)");
     log_message("====================================");
-    
+
     // Проверяем причину сброса (включая brown-out detection)
     check_reset_reason();
-    
+
     bool wifi_config_exists = load_wifi_config();
     load_stations_config();
     load_state();
-    
+
     // ✅ BOUNDS CHECK: проверяем currentStation после загрузки станций
     if (totalStations > 0 && currentStation >= totalStations) {
         log_message(formatString("⚠️ currentStation=%d выходит за границы! Сбрасываем до 0", currentStation));
@@ -98,30 +99,30 @@ void setup() {
     } else if (totalStations == 0) {
         currentStation = 0;
     }
-    
+
     save_state();  // Сохраняем инкрементированный rebootCounter и поправленный currentStation
-    
+
     // Применяем загруженный стиль визуализатора
     visualizerManager.setStyle(visualizerStyle);
-    
+
     setup_display();
     setup_input();
-    
+
     // Если конфиг WiFi есть - пытаемся подключиться
     if (wifi_config_exists && connect_to_wifi()) {
         // --- РЕЖИМ НОРМАЛЬНОЙ РАБОТЫ (STA) ---
         systemState = STATE_STA;
         log_message("Подключено к WiFi. Запуск в режиме станции (STA).");
         setup_audio();
-        start_web_server_sta(); // Запускаем веб-сервер для управления станциями
+        start_web_server_sta();  // Запускаем веб-сервер для управления станциями
     } else {
         // --- РЕЖИМ НАСТРОЙКИ (AP) ---
         systemState = STATE_AP;
         log_message("Не удалось подключиться к WiFi. Запуск в режиме точки доступа (AP).");
         setup_ap_mode();
-        start_web_server_ap(); // Запускаем веб-сервер для настройки WiFi
+        start_web_server_ap();  // Запускаем веб-сервер для настройки WiFi
     }
-    
+
     reset_inactivity_timer();
     log_message("\n=== СИСТЕМА ГОТОВА ===");
     print_system_status();
@@ -137,28 +138,28 @@ void loop() {
                 // ✅ Сохранение громкости теперь через debounce в loop_input()
                 log_message(formatString("🔊 Громкость: %.2f", cmd.floatValue));
                 break;
-                
+
             case CMD_NEXT_STATION:
                 next_station();
                 log_message("⏭️ Следующая станция");
                 break;
-                
+
             case CMD_PREV_STATION:
                 previous_station();
                 log_message("⏮️ Предыдущая станция");
                 break;
-                
+
             case CMD_REBOOT:
                 log_message("🔄 Перезагрузка...");
                 delay(500);
                 ESP.restart();
                 break;
-                
+
             case CMD_SAVE_STATIONS:
                 save_stations_config();
                 log_message("💾 Конфигурация станций сохранена");
                 break;
-                
+
             default:
                 break;
         }
@@ -184,20 +185,20 @@ void loop() {
             loop_audio();  // Без задержек!
         }
     }
-    
+
     // ПРИОРИТЕТ 2: Input (часто, для отзывчивости)
     loop_input();
-    
+
     // ПРИОРИТЕТ 3: Display (только каждые 16ms = 60 FPS)
     // 🎯 ПРОПУСКАЕМ display во время активного декодирования MP3
     static unsigned long lastDisplayUpdate = 0;
     bool audioDecoding = audio_decoding_active.load(std::memory_order_relaxed);
-    
+
     if (!audioDecoding && millis() - lastDisplayUpdate >= 16) {
         loop_display();
         lastDisplayUpdate = millis();
     }
-    
+
     // ПРИОРИТЕТ 4: WiFi Recovery (каждые 500ms для точного мониторинга)
     if (systemState == STATE_STA) {
         static unsigned long lastWiFiRecoveryCheck = 0;
@@ -206,7 +207,7 @@ void loop() {
             lastWiFiRecoveryCheck = millis();
         }
     }
-    
+
     // ПРИОРИТЕТ 5: System tasks (редко - каждую секунду)
     if (systemState == STATE_STA) {
         static unsigned long lastSystemUpdate = 0;
@@ -215,7 +216,7 @@ void loop() {
             lastSystemUpdate = millis();
         }
     }
-    
+
     // НЕТ delay()! Максимальная скорость для audio!
     yield();  // Даем время WiFi/веб-серверу
 }

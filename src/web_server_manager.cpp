@@ -1,17 +1,19 @@
-#include <AsyncTCP.h>
+#include "web_server_manager.h"
+
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
+#include <AsyncTCP.h>
 #include <LittleFS.h>
-#include "config.h"
-#include "web_server_manager.h"
-#include "wifi_manager.h"
+
 #include "audio_manager.h"
-#include "display_manager.h"
+#include "config.h"
 #include "credentials_helper.h"
+#include "display_manager.h"
 #include "log_manager.h"
+#include "string_utils.h"
 #include "system_manager.h"
 #include "url_validator.h"
-#include "string_utils.h"
+#include "wifi_manager.h"
 
 // Веб-сервер
 AsyncWebServer server(80);
@@ -32,7 +34,7 @@ static bool isRegistered = false;
 static bool isAuthenticated = false;
 
 // Макрос для проверки авторизации (включая токен)
-#define CHECK_AUTH() \
+#define CHECK_AUTH()                                        \
     if (checkSessionToken(request)) isAuthenticated = true; \
     if (!isAuthenticated) return request->send(401);
 
@@ -40,7 +42,7 @@ static bool isAuthenticated = false;
 String generateSessionToken() {
     const char* chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     String token = "";
-    token.reserve(SESSION_TOKEN_LENGTH); // Предварительное выделение памяти
+    token.reserve(SESSION_TOKEN_LENGTH);  // Предварительное выделение памяти
     for (int i = 0; i < SESSION_TOKEN_LENGTH; i++) {
         token += chars[random(0, 62)];
     }
@@ -48,9 +50,9 @@ String generateSessionToken() {
 }
 
 // Проверка сессионного токена из куки
-bool checkSessionToken(AsyncWebServerRequest *request) {
+bool checkSessionToken(AsyncWebServerRequest* request) {
     if (sessionToken.length() == 0) return false;
-    
+
     // Проверяем куки
     if (request->hasHeader("Cookie")) {
         String cookie = request->header("Cookie");
@@ -58,10 +60,9 @@ bool checkSessionToken(AsyncWebServerRequest *request) {
         if (tokenPos != -1) {
             int tokenStart = tokenPos + 8;
             int tokenEnd = cookie.indexOf(";", tokenStart);
-            String clientToken = (tokenEnd == -1) ? 
-                cookie.substring(tokenStart) : 
-                cookie.substring(tokenStart, tokenEnd);
-            
+            String clientToken =
+                (tokenEnd == -1) ? cookie.substring(tokenStart) : cookie.substring(tokenStart, tokenEnd);
+
             if (clientToken == sessionToken) {
                 return true;
             }
@@ -157,17 +158,17 @@ function confirmReset() {
 // --- Режим точки доступа (AP Mode) ---
 
 void start_web_server_ap() {
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
         web_loading_html.store(true, std::memory_order_relaxed);
         request->send(LittleFS, "/ap_mode.html", "text/html; charset=utf-8");
     });
 
-    server.on("/api/scan", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/scan", HTTP_GET, [](AsyncWebServerRequest* request) {
         WiFi.scanNetworks(true);
         request->send(200, "text/plain", "Scan Started");
     });
 
-    server.on("/api/scan-results", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/scan-results", HTTP_GET, [](AsyncWebServerRequest* request) {
         int n = WiFi.scanComplete();
         if (n == -1) {
             request->send(202, "text/plain", "Scanning...");
@@ -186,7 +187,7 @@ void start_web_server_ap() {
         }
     });
 
-    server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/save", HTTP_POST, [](AsyncWebServerRequest* request) {
         String ssid;
         if (request->hasParam("ssid_manual", true) && !request->getParam("ssid_manual", true)->value().isEmpty()) {
             ssid = request->getParam("ssid_manual", true)->value();
@@ -215,75 +216,75 @@ void start_web_server_ap() {
     Serial.println("Web-сервер запущен в режиме AP.");
 }
 
-
 // --- Режим станции (STA Mode) ---
 
 void start_web_server_sta() {
     // Проверяем есть ли зарегистрированные пользователи
     isRegistered = load_credentials();
-    
+
     // API обработчики регистрируются ПЕРВЫМИ!
-    
+
     // === МАРШРУТИЗАЦИЯ КОРНЕВОГО ПУТИ ===
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isRegistered) {
             request->redirect("/register");
             return;
         }
-        
+
         // Автоматическая авторизация по токену
         if (checkSessionToken(request)) {
             isAuthenticated = true;
         }
-        
+
         // Если не авторизован - на логин
         if (!isAuthenticated) {
             request->redirect("/login");
             return;
         }
-        
+
         // Авторизован - index.html с UTF-8 и no-cache
         // ПРИОРИТЕТ: приостановить audio для быстрой отдачи HTML!
         web_loading_html.store(true, std::memory_order_relaxed);
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html", "text/html; charset=utf-8");
+        AsyncWebServerResponse* response = request->beginResponse(LittleFS, "/index.html", "text/html; charset=utf-8");
         response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response->addHeader("Pragma", "no-cache");
         response->addHeader("Expires", "0");
         request->send(response);
         // Флаг сбросится в main loop через 100ms
     });
-    
+
     // === РЕГИСТРАЦИЯ (только при первом запуске) ===
-    server.on("/register", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/register", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (isRegistered) {
             // Уже зарегистрирован - редирект на логин
             request->redirect("/login");
             return;
         }
-        
+
         web_loading_html.store(true, std::memory_order_relaxed);
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/register.html", "text/html; charset=utf-8");
+        AsyncWebServerResponse* response =
+            request->beginResponse(LittleFS, "/register.html", "text/html; charset=utf-8");
         response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response->addHeader("Pragma", "no-cache");
         response->addHeader("Expires", "0");
         request->send(response);
     });
 
-    server.on("/register", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/register", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (isRegistered) {
             request->send(400, "text/plain", "Регистрация уже выполнена");
             return;
         }
-        
+
         if (request->hasParam("username", true) && request->hasParam("password", true)) {
             String username = request->getParam("username", true)->value();
             String password = request->getParam("password", true)->value();
-            
+
             if (username.length() < 5 || password.length() < 5) {
                 request->send(400, "text/plain", "Логин и пароль должны быть не менее 5 символов");
                 return;
             }
-            
+
             if (save_credentials(username, password)) {
                 isRegistered = true;
                 request->send(200, "text/plain", "OK");
@@ -294,9 +295,9 @@ void start_web_server_sta() {
             request->send(400, "text/plain", "Bad Request");
         }
     });
-    
+
     // === ЛОГИН ===
-    server.on("/login", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/login", HTTP_GET, [](AsyncWebServerRequest* request) {
         // Если не зарегистрирован - редирект на регистрацию
         if (!isRegistered) {
             request->redirect("/register");
@@ -311,14 +312,14 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/login", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (request->hasParam("username", true) && request->hasParam("password", true)) {
             String username = request->getParam("username", true)->value();
             String password = request->getParam("password", true)->value();
-            
+
             if (verify_credentials(username, password)) {
                 isAuthenticated = true;
-                
+
                 // Генерируем session token ТОЛЬКО если его нет
                 if (sessionToken.length() == 0) {
                     sessionToken = generateSessionToken();
@@ -327,13 +328,13 @@ void start_web_server_sta() {
                 } else {
                     Serial.println("♻️ Используем существующий session token.");
                 }
-                
+
                 // Отправляем токен в куки (действует до очистки)
-                AsyncWebServerResponse *response = request->beginResponse(302);
+                AsyncWebServerResponse* response = request->beginResponse(302);
                 response->addHeader("Location", "/");
                 response->addHeader("Set-Cookie", "session=" + sessionToken + "; Path=/; Max-Age=31536000");
                 request->send(response);
-                
+
                 Serial.println("✅ Успешная авторизация.");
             } else {
                 request->send(401, "text/plain", "Unauthorized");
@@ -343,63 +344,63 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/logout", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/logout", HTTP_GET, [](AsyncWebServerRequest* request) {
         isAuthenticated = false;
-        
+
         // Очищаем session token
         sessionToken = "";
         save_state();
-        
+
         // Очищаем куки
-        AsyncWebServerResponse *response = request->beginResponse(302);
+        AsyncWebServerResponse* response = request->beginResponse(302);
         response->addHeader("Location", "/login");
         response->addHeader("Set-Cookie", "session=; Path=/; Max-Age=0");
         request->send(response);
-        
+
         Serial.println("🚪 Выход из системы. Session token очищен.");
     });
-    
+
     // === ЗАБЫЛ ПАРОЛЬ (FACTORY RESET) ===
-    server.on("/forgot-password", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/forgot-password", HTTP_GET, [](AsyncWebServerRequest* request) {
         // Показываем страницу предупреждения
         request->send(200, "text/html; charset=utf-8", forgot_password_html);
     });
-    
+
     // API: Выполнение factory reset без пароля (для забывших пароль)
-    server.on("/api/forgot-password-reset", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/forgot-password-reset", HTTP_POST, [](AsyncWebServerRequest* request) {
         // НЕ требуем авторизацию - это для тех, кто забыл пароль!
-        
+
         log_message("⚠️ FACTORY RESET через 'Forgot Password'. Удаление всех данных...");
-        
+
         // Удаляем все конфигурационные файлы
         LittleFS.remove("/credentials.json");
         LittleFS.remove("/wifi.json");
         LittleFS.remove("/stations.json");
         LittleFS.remove("/state.json");
         LittleFS.remove("/log.txt");
-        
+
         // Сбрасываем флаги
         isRegistered = false;
         isAuthenticated = false;
         sessionToken = "";
-        
+
         Serial.println("🔥 Factory Reset выполнен! Перезагрузка...");
-        
+
         request->send(200, "text/plain", "Factory reset complete. Rebooting...");
         delay(1000);
         ESP.restart();
     });
 
     // API: Информация о станциях (количество и лимит)
-    server.on("/api/stations/info", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/stations/info", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (checkSessionToken(request)) isAuthenticated = true;
         if (!isAuthenticated) return request->send(401);
-        
+
         // 🛡️ ЗАЩИТА ОТ RACE CONDITION
         STATIONS_LOCK();
         size_t currentSize = stations.size();
         STATIONS_UNLOCK();
-        
+
         String json = "{";
         json += "\"current\":" + String(currentSize) + ",";
         json += "\"max\":" + String(MAX_RADIO_STATIONS) + ",";
@@ -408,16 +409,16 @@ void start_web_server_sta() {
         request->send(200, "application/json; charset=utf-8", json);
     });
 
-    server.on("/api/stations", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/stations", HTTP_GET, [](AsyncWebServerRequest* request) {
         // Автоматическая авторизация по токену
         if (checkSessionToken(request)) isAuthenticated = true;
         if (!isAuthenticated) return request->send(401);
-        
+
         // 🛡️ ЗАЩИТА ОТ RACE CONDITION: копируем stations под мьютексом
         STATIONS_LOCK();
         std::vector<RadioStation> stationsCopy = stations;
         STATIONS_UNLOCK();
-        
+
         // Оптимизация: уменьшаем размер JSON
         JsonDocument doc;
         JsonArray array = doc.to<JsonArray>();
@@ -431,23 +432,23 @@ void start_web_server_sta() {
         request->send(200, "application/json; charset=utf-8", response);
     });
 
-    server.on("/api/add", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/add", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
-        
+
         // 🛡️ ЗАЩИТА ОТ RACE CONDITION: проверяем лимит под мьютексом
         STATIONS_LOCK();
         bool limitReached = stations.size() >= MAX_RADIO_STATIONS;
         STATIONS_UNLOCK();
-        
+
         if (limitReached) {
             request->send(400, "text/plain", "Maximum stations limit reached (" + String(MAX_RADIO_STATIONS) + ")");
             return;
         }
-        
+
         if (request->hasParam("name", true) && request->hasParam("url", true)) {
             String name = request->getParam("name", true)->value();
             String url = request->getParam("url", true)->value();
-            
+
             // 🛡️ ВАЛИДАЦИЯ URL
             URLValidationResult validation = validateURL(url);
             if (validation != URL_VALID) {
@@ -455,12 +456,12 @@ void start_web_server_sta() {
                 request->send(400, "text/plain", "Invalid URL: " + errorMsg);
                 return;
             }
-            
+
             // 🛡️ Добавление под мьютексом
             STATIONS_LOCK();
             stations.push_back({name, url, true});
             STATIONS_UNLOCK();
-            
+
             sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "OK");
         } else {
@@ -468,16 +469,18 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/api/delete", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/delete", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (request->hasParam("name", true)) {
             String name = request->getParam("name", true)->value();
-            
+
             // 🛡️ ЗАЩИТА ОТ RACE CONDITION: удаление под мьютексом
             STATIONS_LOCK();
-            stations.erase(std::remove_if(stations.begin(), stations.end(), [&](const RadioStation& s){ return s.name == name; }), stations.end());
+            stations.erase(
+                std::remove_if(stations.begin(), stations.end(), [&](const RadioStation& s) { return s.name == name; }),
+                stations.end());
             STATIONS_UNLOCK();
-            
+
             sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "OK");
         } else {
@@ -485,13 +488,14 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/api/update", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/update", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
-        if (request->hasParam("originalName", true) && request->hasParam("name", true) && request->hasParam("url", true)) {
+        if (request->hasParam("originalName", true) && request->hasParam("name", true) &&
+            request->hasParam("url", true)) {
             String originalName = request->getParam("originalName", true)->value();
             String name = request->getParam("name", true)->value();
             String url = request->getParam("url", true)->value();
-            
+
             // 🛡️ ВАЛИДАЦИЯ URL
             URLValidationResult validation = validateURL(url);
             if (validation != URL_VALID) {
@@ -499,7 +503,7 @@ void start_web_server_sta() {
                 request->send(400, "text/plain", "Invalid URL: " + errorMsg);
                 return;
             }
-            
+
             for (auto& station : stations) {
                 if (station.name == originalName) {
                     station.name = name;
@@ -515,7 +519,7 @@ void start_web_server_sta() {
     });
 
     // --- API пульта управления ---
-    server.on("/api/player/next", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/player/next", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (sendNextStationCommand()) {
             request->send(200, "text/plain", "OK");
@@ -524,7 +528,7 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/api/player/previous", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/player/previous", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (sendPrevStationCommand()) {
             request->send(200, "text/plain", "OK");
@@ -533,7 +537,7 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/api/player/volume", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/player/volume", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (request->hasParam("volume", true)) {
             float vol = request->getParam("volume", true)->value().toFloat();
@@ -548,19 +552,19 @@ void start_web_server_sta() {
     });
 
     // --- API дисплея ---
-    server.on("/api/display/rotation", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/display/rotation", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         String json = jsonField("rotation", displayRotation);
         request->send(200, "application/json; charset=utf-8", json);
     });
 
-    server.on("/api/display/rotation", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/display/rotation", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (request->hasParam("rotation", true)) {
             uint8_t rotation = request->getParam("rotation", true)->value().toInt();
             if (rotation == 0 || rotation == 2) {
                 set_display_rotation(rotation);
-                save_state(); // Сохраняем настройку
+                save_state();  // Сохраняем настройку
                 request->send(200, "text/plain", "OK");
             } else {
                 request->send(400, "text/plain", "Invalid rotation value");
@@ -572,16 +576,15 @@ void start_web_server_sta() {
 
     // --- API визуализатора ---
     // GET - получить текущий стиль
-    server.on("/api/visualizer/style", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/visualizer/style", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
-        String json = formatString("{\"style\":%d,\"name\":\"%s\"}", 
-                                   (int)visualizerStyle, 
+        String json = formatString("{\"style\":%d,\"name\":\"%s\"}", (int)visualizerStyle,
                                    visualizerManager.getCurrentStyleName());
         request->send(200, "application/json; charset=utf-8", json);
     });
 
     // POST - изменить стиль
-    server.on("/api/visualizer/style", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/visualizer/style", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (request->hasParam("style", true)) {
             int style = request->getParam("style", true)->value().toInt();
@@ -599,19 +602,20 @@ void start_web_server_sta() {
     });
 
     // GET - список всех стилей
-    server.on("/api/visualizer/styles", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/visualizer/styles", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         String json = "[";
         for (int i = 0; i < VISUALIZER_STYLE_COUNT; i++) {
             if (i > 0) json += ",";
-            json += "{\"id\":" + String(i) + ",\"name\":\"" + VisualizerManager::getStyleName((VisualizerStyle)i) + "\"}";
+            json +=
+                "{\"id\":" + String(i) + ",\"name\":\"" + VisualizerManager::getStyleName((VisualizerStyle)i) + "\"}";
         }
         json += "]";
         request->send(200, "application/json; charset=utf-8", json);
     });
 
     // --- API системы ---
-    server.on("/api/system/reboot", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/system/reboot", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         if (sendRebootCommand()) {
             request->send(200, "text/plain", "Rebooting...");
@@ -620,12 +624,12 @@ void start_web_server_sta() {
         }
     });
 
-    server.on("/api/factory-reset", HTTP_POST, [](AsyncWebServerRequest *request){
+    server.on("/api/factory-reset", HTTP_POST, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
-        
+
         if (request->hasParam("password", true)) {
             String password = request->getParam("password", true)->value();
-            
+
             // Проверяем пароль
             if (verify_credentials(webCredentials.username, password)) {
                 // Удаляем все конфигурационные файлы
@@ -634,9 +638,9 @@ void start_web_server_sta() {
                 LittleFS.remove("/stations.json");
                 LittleFS.remove("/state.json");
                 LittleFS.remove("/log.txt");
-                
+
                 log_message("❗ FACTORY RESET выполнен! Перезагрузка...");
-                
+
                 request->send(200, "text/plain", "Factory reset complete");
                 delay(500);
                 ESP.restart();
@@ -649,131 +653,135 @@ void start_web_server_sta() {
     });
 
     // --- API логов ---
-    server.on("/api/wifi/fallback", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/wifi/fallback", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
-        
+
         JsonDocument doc;
         doc["fallback_enabled"] = wifiConfig.fallbackEnabled;
         doc["fallback_ssid"] = wifiConfig.fallbackSsid;
         // Пароль не возвращаем — только признак наличия
         doc["fallback_has_password"] = !wifiConfig.fallbackPassword.isEmpty();
-        
+
         String response;
         serializeJson(doc, response);
         request->send(200, "application/json", response);
     });
 
-    server.on("/api/wifi/fallback", HTTP_POST, [](AsyncWebServerRequest *request){
-        if (!isAuthenticated) return request->send(401);
-    }, nullptr, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, data, len);
-        
-        if (error) {
-            request->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
-            return;
-        }
-        
-        if (doc["fallback_enabled"].is<bool>()) {
-            wifiConfig.fallbackEnabled = doc["fallback_enabled"].as<bool>();
-        }
-        if (doc["fallback_ssid"].is<String>()) {
-            wifiConfig.fallbackSsid = doc["fallback_ssid"].as<String>();
-        }
-        if (doc["fallback_password"].is<String>()) {
-            wifiConfig.fallbackPassword = doc["fallback_password"].as<String>();
-        }
-        
-        if (save_wifi_config()) {
-            request->send(200, "application/json", "{\"status\":\"ok\"}");
-        } else {
-            request->send(500, "application/json", "{\"error\":\"Save failed\"}");
-        }
-    });
+    server.on(
+        "/api/wifi/fallback", HTTP_POST,
+        [](AsyncWebServerRequest* request) {
+            if (!isAuthenticated) return request->send(401);
+        },
+        nullptr,
+        [](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+            JsonDocument doc;
+            DeserializationError error = deserializeJson(doc, data, len);
+
+            if (error) {
+                request->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+                return;
+            }
+
+            if (doc["fallback_enabled"].is<bool>()) {
+                wifiConfig.fallbackEnabled = doc["fallback_enabled"].as<bool>();
+            }
+            if (doc["fallback_ssid"].is<String>()) {
+                wifiConfig.fallbackSsid = doc["fallback_ssid"].as<String>();
+            }
+            if (doc["fallback_password"].is<String>()) {
+                wifiConfig.fallbackPassword = doc["fallback_password"].as<String>();
+            }
+
+            if (save_wifi_config()) {
+                request->send(200, "application/json", "{\"status\":\"ok\"}");
+            } else {
+                request->send(500, "application/json", "{\"error\":\"Save failed\"}");
+            }
+        });
 
     // --- API логов ---
-    server.on("/api/logs", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/logs", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         request->send(200, "text/plain", get_logs());
     });
 
     // --- API управления станциями (расширенное) ---
-    server.on("/api/stations/export", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/api/stations/export", HTTP_GET, [](AsyncWebServerRequest* request) {
         if (!isAuthenticated) return request->send(401);
         request->send(LittleFS, "/stations.json", "application/json; charset=utf-8", true);
     });
 
-    AsyncCallbackJsonWebHandler* orderHandler = new AsyncCallbackJsonWebHandler("/api/stations/order", [](AsyncWebServerRequest *request, JsonVariant &json) {
-        if (!isAuthenticated) return request->send(401);
-        JsonArray newOrder = json.as<JsonArray>();
-        std::vector<RadioStation> ordered_stations;
-        
-        // 🛡️ ЗАЩИТА ОТ RACE CONDITION: читаем stations под мьютексом
-        STATIONS_LOCK();
-        for (JsonVariant v : newOrder) {
-            String name = v.as<String>();
-            for (const auto& s : stations) {
-                if (s.name == name) {
-                    ordered_stations.push_back(s);
-                    break;
+    AsyncCallbackJsonWebHandler* orderHandler =
+        new AsyncCallbackJsonWebHandler("/api/stations/order", [](AsyncWebServerRequest* request, JsonVariant& json) {
+            if (!isAuthenticated) return request->send(401);
+            JsonArray newOrder = json.as<JsonArray>();
+            std::vector<RadioStation> ordered_stations;
+
+            // 🛡️ ЗАЩИТА ОТ RACE CONDITION: читаем stations под мьютексом
+            STATIONS_LOCK();
+            for (JsonVariant v : newOrder) {
+                String name = v.as<String>();
+                for (const auto& s : stations) {
+                    if (s.name == name) {
+                        ordered_stations.push_back(s);
+                        break;
+                    }
                 }
             }
-        }
-        
-        // 🛡️ Перезаписываем stations только если все станции валидны
-        if (ordered_stations.size() == stations.size()) {
-            stations = ordered_stations;
-            STATIONS_UNLOCK();
-            
-            // ✅ Останавливаем аудио и сбрасываем на первую станцию
-            force_audio_reset();
-            currentStation = 0;
-            
-            // 📝 Логируем новый порядок
-            Serial.println("♻️ Порядок станций изменен:");
-            STATIONS_LOCK();
-            for (size_t i = 0; i < stations.size(); i++) {
-                Serial.printf("  %d. %s\n", i, stations[i].name.c_str());
+
+            // 🛡️ Перезаписываем stations только если все станции валидны
+            if (ordered_stations.size() == stations.size()) {
+                stations = ordered_stations;
+                STATIONS_UNLOCK();
+
+                // ✅ Останавливаем аудио и сбрасываем на первую станцию
+                force_audio_reset();
+                currentStation = 0;
+
+                // 📝 Логируем новый порядок
+                Serial.println("♻️ Порядок станций изменен:");
+                STATIONS_LOCK();
+                for (size_t i = 0; i < stations.size(); i++) {
+                    Serial.printf("  %d. %s\n", i, stations[i].name.c_str());
+                }
+                STATIONS_UNLOCK();
+
+                sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
+                request->send(200, "text/plain", "Order saved");
+            } else {
+                STATIONS_UNLOCK();
+                request->send(400, "text/plain", "Invalid station order data");
             }
-            STATIONS_UNLOCK();
-            
-            sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
-            request->send(200, "text/plain", "Order saved");
-        } else {
-            STATIONS_UNLOCK();
-            request->send(400, "text/plain", "Invalid station order data");
-        }
-    });
+        });
     server.addHandler(orderHandler);
 
     // Обработка загрузки файла для импорта
-    server.onFileUpload([](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-        if (!isAuthenticated) return request->send(401);
-        if (request->url() == "/api/stations/import") {
-            if (!index) {
-                // Открываем файл для записи
-                request->_tempFile = LittleFS.open("/stations.json", "w");
+    server.onFileUpload(
+        [](AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+            if (!isAuthenticated) return request->send(401);
+            if (request->url() == "/api/stations/import") {
+                if (!index) {
+                    // Открываем файл для записи
+                    request->_tempFile = LittleFS.open("/stations.json", "w");
+                }
+                if (len) {
+                    // Пишем данные в файл
+                    request->_tempFile.write(data, len);
+                }
+                if (final) {
+                    // Закрываем файл и перезагружаем конфиг
+                    request->_tempFile.close();
+                    load_stations_config();
+                    request->send(200, "text/plain", "Import successful");
+                }
             }
-            if (len) {
-                // Пишем данные в файл
-                request->_tempFile.write(data, len);
-            }
-            if (final) {
-                // Закрываем файл и перезагружаем конфиг
-                request->_tempFile.close();
-                load_stations_config();
-                request->send(200, "text/plain", "Import successful");
-            }
-        }
-    });
+        });
 
     // Статические файлы РЕГИСТРИРУЕМ В КОНЦЕ!
     // КЕШИРОВАНИЕ для ускорения (1 час)
-    server.serveStatic("/", LittleFS, "/")
-        .setDefaultFile("index.html")
-        .setCacheControl("max-age=3600");
+    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html").setCacheControl("max-age=3600");
 
-    server.onNotFound([](AsyncWebServerRequest *request){
+    server.onNotFound([](AsyncWebServerRequest* request) {
         // Если не зарегистрирован - на регистрацию
         if (!isRegistered) {
             request->redirect("/register");
