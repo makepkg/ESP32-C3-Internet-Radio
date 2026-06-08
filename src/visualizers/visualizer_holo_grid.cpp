@@ -1,10 +1,10 @@
 #include "visualizer_holo_grid.h"
 
 void IRAM_ATTR VisualizerHoloGrid::draw(Adafruit_SSD1306& display, int* bands, int bandCount) {
-    const int VP_X = SCREEN_WIDTH / 2;  // 64 — точка схода по центру
-    const int VP_Y = 0;                 // точка схода вверху
-    const int NUM_V = 9;                // радиальные линии
-    const int NUM_H = 5;                // горизонтальные линии
+    const int VP_X = SCREEN_WIDTH / 2; // 64 — точка схода по центру
+    const int VP_Y = 0;                // точка схода вверху
+    const int NUM_V = 9;               // радиальные линии
+    const int NUM_H = 5;               // горизонтальные линии
 
     // Сглаживание полос (attack быстрый, decay плавный)
     for (int i = 0; i < bandCount && i < 16; i++) {

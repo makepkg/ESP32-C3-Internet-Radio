@@ -26,7 +26,7 @@ void IRAM_ATTR VisualizerStars::draw(Adafruit_SSD1306& display, int* bands, int 
     for (int i = 0; i < newStarsCount; i++) {
         for (int j = 0; j < MAX_STARS; j++) {
             if (!stars[j].active) {
-                stars[j].x = random(0, SCREEN_WIDTH) << 8;  // * 256
+                stars[j].x = random(0, SCREEN_WIDTH) << 8; // * 256
                 stars[j].y = 0;
 
                 // Скорость: 128-384 (0.5-1.5 * 256)
@@ -47,11 +47,11 @@ void IRAM_ATTR VisualizerStars::draw(Adafruit_SSD1306& display, int* bands, int 
     }
 
     // КОМЕТЫ (редкие, быстрые, длинные) - только при высокой интенсивности!
-    int threshold = (SCREEN_HEIGHT * 6) / 10;  // 0.6 * SCREEN_HEIGHT
+    int threshold = (SCREEN_HEIGHT * 6) / 10; // 0.6 * SCREEN_HEIGHT
     if (avgAmp > threshold && random(0, 10) < 2) {
         for (int j = 0; j < MAX_STARS; j++) {
             if (!stars[j].active) {
-                stars[j].x = random(0, SCREEN_WIDTH) << 8;  // * 256
+                stars[j].x = random(0, SCREEN_WIDTH) << 8; // * 256
                 stars[j].y = 0;
 
                 // КОМЕТА: 640-1152 (2.5-4.5 * 256)
@@ -79,7 +79,7 @@ void IRAM_ATTR VisualizerStars::draw(Adafruit_SSD1306& display, int* bands, int 
             stars[i].y += stars[i].speedY;
 
             // Деактивируем если вышла за пределы (fixed-point)
-            int yPixel = stars[i].y >> 8;  // / 256
+            int yPixel = stars[i].y >> 8; // / 256
             int xPixel = stars[i].x >> 8;
 
             if (yPixel >= SCREEN_HEIGHT || xPixel < 0 || xPixel >= SCREEN_WIDTH) {
@@ -97,7 +97,7 @@ void IRAM_ATTR VisualizerStars::draw(Adafruit_SSD1306& display, int* bands, int 
             // Хвост (след за звездой, направлен вверх)
             for (int t = 1; t <= stars[i].trailLength; t++) {
                 int trailY = y - t;
-                int trailX = x - ((stars[i].speedX * t) >> 9);  // Делим на 512 (0.5)
+                int trailX = x - ((stars[i].speedX * t) >> 9); // Делим на 512 (0.5)
 
                 if (trailY >= 0 && trailY < SCREEN_HEIGHT && trailX >= 0 && trailX < SCREEN_WIDTH) {
                     // Хвост тускнеет к концу

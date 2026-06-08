@@ -64,9 +64,9 @@ bool connect_to_wifi() {
     WiFi.mode(WIFI_STA);
 
     // === ОПТИМИЗАЦИЯ ДЛЯ СТРИМИНГА ===
-    WiFi.setSleep(false);                 // Отключаем power save - нет задержек
-    WiFi.setAutoReconnect(true);          // Автоматическое переподключение
-    WiFi.setTxPower(WIFI_POWER_19_5dBm);  // Максимальная мощность передатчика
+    WiFi.setSleep(false);                // Отключаем power save - нет задержек
+    WiFi.setAutoReconnect(true);         // Автоматическое переподключение
+    WiFi.setTxPower(WIFI_POWER_19_5dBm); // Максимальная мощность передатчика
 
     // 2 попытки подключения
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -86,8 +86,8 @@ bool connect_to_wifi() {
                 lastCheckTime = millis();
                 // Можно добавить анимацию или обновление дисплея здесь
             }
-            yield();    // Даем время WiFi стеку для обработки
-            delay(10);  // Минимальная задержка для предотвращения зависания watchdog
+            yield();   // Даем время WiFi стеку для обработки
+            delay(10); // Минимальная задержка для предотвращения зависания watchdog
         }
 
         if (WiFi.status() == WL_CONNECTED) {
@@ -115,7 +115,7 @@ bool connect_to_wifi() {
         log_message(formatString("❌ Не удалось подключиться к %s", wifiConfig.ssid.c_str()));
         WiFi.disconnect();
 
-        if (attempt < 1) {  // Если еще есть попытки
+        if (attempt < 1) { // Если еще есть попытки
             delay(WIFI_RETRY_DELAY);
         }
     }
@@ -136,7 +136,7 @@ void handle_wifi_recovery() {
     // === УРОВЕНЬ 0: WiFi работает нормально ===
     if (wifiRecoveryState == WIFI_OK) {
         if (isConnected) {
-            return;  // Все хорошо
+            return; // Все хорошо
         }
 
         // WiFi потерян! Запускаем авто-реконнект

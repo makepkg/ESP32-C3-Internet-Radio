@@ -19,4 +19,4 @@ class VisualizerBase {
     virtual ~VisualizerBase() {}
 };
 
-#endif  // VISUALIZER_BASE_H
+#endif // VISUALIZER_BASE_H

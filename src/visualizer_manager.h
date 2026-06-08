@@ -40,4 +40,4 @@ class VisualizerManager {
 // Глобальный экземпляр менеджера
 extern VisualizerManager visualizerManager;
 
-#endif  // VISUALIZER_MANAGER_H
+#endif // VISUALIZER_MANAGER_H

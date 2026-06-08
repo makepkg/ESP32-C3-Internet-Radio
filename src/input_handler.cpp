@@ -20,7 +20,7 @@ bool buttonHeld = false;
 const unsigned long shortPressDuration = INPUT_SHORT_PRESS;
 const unsigned long longPressDuration = INPUT_LONG_PRESS;
 const unsigned long doubleClickMaxDelay = INPUT_DOUBLE_CLICK_DELAY;
-unsigned long singleClickPendingTime = 0;  // 0, если клик не ожидает обработки
+unsigned long singleClickPendingTime = 0; // 0, если клик не ожидает обработки
 
 // === DEBOUNCE СОХРАНЕНИЯ ГРОМКОСТИ (защита от износа Flash) ===
 static unsigned long lastVolumeSaveTime = 0;
@@ -43,35 +43,35 @@ void IRAM_ATTR encoderISR() {
     // Читаем текущее состояние обоих пинов
     uint8_t clk = digitalRead(ENCODER_CLK);
     uint8_t dt = digitalRead(ENCODER_DT);
-    uint8_t currentState = (clk << 1) | dt;  // 2-битное состояние: CLK|DT
+    uint8_t currentState = (clk << 1) | dt; // 2-битное состояние: CLK|DT
 
     // Таблица переходов для определения направления (Gray code)
     // По часовой: 00 -> 10 -> 11 -> 01 -> 00
     // Против часовой: 00 -> 01 -> 11 -> 10 -> 00
 
     // Определяем направление по переходу состояния
-    if (lastState == 0b00 && currentState == 0b10) {  // 0 -> 2: по часовой
+    if (lastState == 0b00 && currentState == 0b10) { // 0 -> 2: по часовой
         encoderPos.fetch_add(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b00 && currentState == 0b01) {  // 0 -> 1: против часовой
+    } else if (lastState == 0b00 && currentState == 0b01) { // 0 -> 1: против часовой
         encoderPos.fetch_sub(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b10 && currentState == 0b11) {  // 2 -> 3: по часовой
+    } else if (lastState == 0b10 && currentState == 0b11) { // 2 -> 3: по часовой
         encoderPos.fetch_add(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b01 && currentState == 0b11) {  // 1 -> 3: против часовой
+    } else if (lastState == 0b01 && currentState == 0b11) { // 1 -> 3: против часовой
         encoderPos.fetch_sub(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b11 && currentState == 0b01) {  // 3 -> 1: по часовой
+    } else if (lastState == 0b11 && currentState == 0b01) { // 3 -> 1: по часовой
         encoderPos.fetch_add(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b11 && currentState == 0b10) {  // 3 -> 2: против часовой
+    } else if (lastState == 0b11 && currentState == 0b10) { // 3 -> 2: против часовой
         encoderPos.fetch_sub(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b01 && currentState == 0b00) {  // 1 -> 0: по часовой
+    } else if (lastState == 0b01 && currentState == 0b00) { // 1 -> 0: по часовой
         encoderPos.fetch_add(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
-    } else if (lastState == 0b10 && currentState == 0b00) {  // 2 -> 0: против часовой
+    } else if (lastState == 0b10 && currentState == 0b00) { // 2 -> 0: против часовой
         encoderPos.fetch_sub(1, std::memory_order_relaxed);
         encoderChanged.store(true, std::memory_order_relaxed);
     }
@@ -166,11 +166,11 @@ void loop_input() {
                     } else {
                         pause_ip_display();
                     }
-                    singleClickPendingTime = 0;  // Отменяем отложенный клик
+                    singleClickPendingTime = 0; // Отменяем отложенный клик
                 } else if (singleClickPendingTime != 0) {
                     // Это двойное нажатие, т.к. первое еще не обработано
                     previous_station();
-                    singleClickPendingTime = 0;  // Отменяем обработку одиночного
+                    singleClickPendingTime = 0; // Отменяем обработку одиночного
                 } else {
                     // Это первое нажатие, ставим его в очередь
                     singleClickPendingTime = millis();

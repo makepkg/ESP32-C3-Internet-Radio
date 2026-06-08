@@ -8,4 +8,4 @@ void log_message(const String& message);
 void clear_logs();
 String get_logs();
 
-#endif  // LOG_MANAGER_H
+#endif // LOG_MANAGER_H

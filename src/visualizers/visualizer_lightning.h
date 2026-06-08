@@ -9,18 +9,18 @@ class VisualizerLightning : public VisualizerBase {
    private:
     // Сегмент молнии (вершина)
     struct Segment {
-        int16_t x;  // Fixed-point (* 256)
-        int16_t y;  // Fixed-point (* 256)
+        int16_t x; // Fixed-point (* 256)
+        int16_t y; // Fixed-point (* 256)
     };
 
     // Молния
     struct LightningBolt {
-        Segment points[12];  // Максимум 12 точек на молнию
+        Segment points[12]; // Максимум 12 точек на молнию
         uint8_t segmentCount;
-        uint8_t brightness;  // Яркость для затухания
-        uint8_t lifetime;    // Время жизни (кадры)
+        uint8_t brightness; // Яркость для затухания
+        uint8_t lifetime;   // Время жизни (кадры)
         bool active;
-        bool isBranch;  // Ветвление или основная молния
+        bool isBranch; // Ветвление или основная молния
     };
 
     static const int MAX_BOLTS = 8;
@@ -54,4 +54,4 @@ class VisualizerLightning : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_LIGHTNING_H
+#endif // VISUALIZER_LIGHTNING_H

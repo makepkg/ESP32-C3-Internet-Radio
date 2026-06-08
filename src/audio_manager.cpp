@@ -129,10 +129,10 @@ void setup_audio() {
 
 // ⚠️ Попытка переинициализации I2S
 void try_reinit_i2s() {
-    if (i2sInitialized) return;  // Уже инициализирован
+    if (i2sInitialized) return; // Уже инициализирован
 
     unsigned long now = millis();
-    if (now - lastI2SInitAttempt < AUDIO_I2S_RETRY_INTERVAL) return;  // Еще не прошло AUDIO_I2S_RETRY_INTERVAL
+    if (now - lastI2SInitAttempt < AUDIO_I2S_RETRY_INTERVAL) return; // Еще не прошло AUDIO_I2S_RETRY_INTERVAL
 
     lastI2SInitAttempt = now;
     log_message("🔄 Попытка переинициализации I2S...");
@@ -160,7 +160,7 @@ void IRAM_ATTR loop_audio() {
 
     // ⚠️ Проверка инициализации и попытка восстановления I2S
     try_reinit_i2s();
-    if (!i2sInitialized) return;  // I2S не готов, пропускаем аудио
+    if (!i2sInitialized) return; // I2S не готов, пропускаем аудио
 
     // 🛡️ Защита от race condition: проверяем stations.empty() под мьютексом
     STATIONS_LOCK();
@@ -208,7 +208,7 @@ void IRAM_ATTR next_station() {
     // ✅ Атомарная проверка и установка - защита от race condition
     bool expected = false;
     if (!isChangingStation.compare_exchange_strong(expected, true)) {
-        return;  // Уже идет смена станции
+        return; // Уже идет смена станции
     }
 
     audioState = AUDIO_IDLE;
@@ -223,7 +223,7 @@ void IRAM_ATTR next_station() {
     reset_inactivity_timer();
     audioState = AUDIO_IDLE;
 
-    isChangingStation.store(false, std::memory_order_release);  // ✅ Снимаем блокировку атомарно
+    isChangingStation.store(false, std::memory_order_release); // ✅ Снимаем блокировку атомарно
 }
 
 void IRAM_ATTR previous_station() {
@@ -232,7 +232,7 @@ void IRAM_ATTR previous_station() {
     // ✅ Атомарная проверка и установка - защита от race condition
     bool expected = false;
     if (!isChangingStation.compare_exchange_strong(expected, true)) {
-        return;  // Уже идет смена станции
+        return; // Уже идет смена станции
     }
 
     audioState = AUDIO_IDLE;
@@ -247,7 +247,7 @@ void IRAM_ATTR previous_station() {
     reset_inactivity_timer();
     audioState = AUDIO_IDLE;
 
-    isChangingStation.store(false, std::memory_order_release);  // ✅ Снимаем блокировку атомарно
+    isChangingStation.store(false, std::memory_order_release); // ✅ Снимаем блокировку атомарно
 }
 
 void IRAM_ATTR set_volume(float new_volume) {
@@ -269,7 +269,7 @@ void cleanup_audio() {
         // Останавливаем и ждем завершения текущего loop()
         if (mp3->isRunning()) {
             mp3->stop();
-            delay(20);  // Даем время завершить декодирование
+            delay(20); // Даем время завершить декодирование
         }
         delete mp3;
         mp3 = nullptr;
@@ -409,7 +409,7 @@ bool init_audio_non_blocking() {
         case AUDIO_STARTING: {
             if (mp3 && mp3->begin(buff, out_with_visualizer)) {
                 out_with_visualizer->SetGain(volume);
-                audioState = AUDIO_BUFFERING;  // Переходим к буферизации
+                audioState = AUDIO_BUFFERING; // Переходим к буферизации
                 audioStateTime = millis();
                 log_message("Декодер готов, заполняем буфер...");
                 return false;
@@ -445,7 +445,7 @@ bool init_audio_non_blocking() {
         case AUDIO_ERROR: {
             log_message("❌ Ошибка подключения к станции. Переключаюсь на следующую...");
             mark_station_as_unavailable(currentStation);
-            next_station();  // Автоматически переключаем на следующую
+            next_station(); // Автоматически переключаем на следующую
             return false;
         }
 
@@ -508,12 +508,12 @@ void process_audio_data_for_visualizer(const int16_t* data, int len) {
             Serial.printf("⚠️ Stack LOW: %u bytes (min %u)\n", freeStack, VISUALIZER_MIN_STACK);
             lastWarning = millis();
         }
-        return;  // Пропускаем визуализацию для безопасности
+        return; // Пропускаем визуализацию для безопасности
     }
 
     // 3. Валидация размера данных
     int sample_count = len / sizeof(int16_t);
-    if (sample_count < VISUALIZER_BANDS) return;  // Недостаточно данных для VISUALIZER_BANDS полос
+    if (sample_count < VISUALIZER_BANDS) return; // Недостаточно данных для VISUALIZER_BANDS полос
 
     int band_size = sample_count / VISUALIZER_BANDS;
     if (band_size == 0) return;

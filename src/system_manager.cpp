@@ -14,7 +14,7 @@
 #include "wifi_manager.h"
 
 // Определяем глобальную переменную состояния
-SystemState systemState = STATE_STA;  // По умолчанию - режим станции
+SystemState systemState = STATE_STA; // По умолчанию - режим станции
 
 static unsigned long lastStatusPrint = 0;
 
@@ -33,7 +33,7 @@ void check_power_stability() {
     if (wasBrownout) {
         Serial.println("⚠️ ВНИМАНИЕ: Предыдущий сброс был из-за brown-out!");
         Serial.println("⚡ Даем дополнительное время для стабилизации питания...");
-        delay(POWER_BROWNOUT_EXTRA_DELAY);  // Дополнительная задержка если был brown-out
+        delay(POWER_BROWNOUT_EXTRA_DELAY); // Дополнительная задержка если был brown-out
     }
 
     // 3. Информация о brown-out detector
@@ -165,7 +165,7 @@ void shutdown_system() {
 
     // ✅ Сохраняем отложенную громкость до save_state()
     force_save_volume();
-    save_state();  // Сохраняем состояние перед выключением
+    save_state(); // Сохраняем состояние перед выключением
 
     force_audio_reset();
     WiFi.disconnect(true);

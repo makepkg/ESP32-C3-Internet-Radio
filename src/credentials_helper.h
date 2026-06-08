@@ -34,4 +34,4 @@ bool save_credentials(const String& username, const String& password);
  */
 bool verify_credentials(const String& username, const String& password);
 
-#endif  // CREDENTIALS_HELPER_H
+#endif // CREDENTIALS_HELPER_H

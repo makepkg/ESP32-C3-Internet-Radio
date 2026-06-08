@@ -8,7 +8,7 @@
 #include "display_manager.h"
 
 // Глобальные переменные для хранения конфигураций
-WiFiCredentials wifiConfig;  // Одна WiFi сеть
+WiFiCredentials wifiConfig; // Одна WiFi сеть
 std::vector<RadioStation> stations;
 int totalStations = 0;
 WebCredentials webCredentials;
@@ -18,7 +18,7 @@ SemaphoreHandle_t stationsMutex = nullptr;
 
 // Настройки визуализатора и дисплея
 VisualizerStyle visualizerStyle = STYLE_BARS;
-uint8_t displayRotation = 2;  // По умолчанию flipped
+uint8_t displayRotation = 2; // По умолчанию flipped
 
 // Сессия и автологин
 String sessionToken = "";
@@ -57,7 +57,7 @@ bool load_wifi_config() {
         Serial.println("Файл wifi.json не найден. Запуск в режиме AP.");
         wifiConfig.ssid = "";
         wifiConfig.password = "";
-        return false;  // Нет конфига - запускаем AP mode
+        return false; // Нет конфига - запускаем AP mode
     }
 
     JsonDocument doc;
@@ -122,7 +122,7 @@ bool load_stations_config() {
         Serial.println("Файл stations.json не найден. Список станций пуст.");
         stations.clear();
         totalStations = 0;
-        return false;  // Нет конфига - список пуст
+        return false; // Нет конфига - список пуст
     }
 
     JsonDocument doc;
@@ -140,7 +140,7 @@ bool load_stations_config() {
     for (JsonObject obj : array) {
         stations.push_back({
             obj["name"].as<String>(), obj["url"].as<String>(),
-            true  // isAvailable всегда true при загрузке
+            true // isAvailable всегда true при загрузке
         });
     }
     totalStations = stations.size();
@@ -200,7 +200,7 @@ bool load_state() {
     volume = doc["volume"] | VOLUME_DEFAULT;
     // ✅ НЕ загружаем currentStation - всегда начинаем с первой станции (0)
     currentStation = 0;
-    displayRotation = doc["displayRotation"] | 2;  // default: 2 (flipped)
+    displayRotation = doc["displayRotation"] | 2; // default: 2 (flipped)
     visualizerStyle = (VisualizerStyle)(doc["visualizerStyle"] | STYLE_BARS);
 
     // Загружаем сессию и счетчик перезагрузок

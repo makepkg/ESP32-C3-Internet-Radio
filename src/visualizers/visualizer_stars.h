@@ -7,10 +7,10 @@
 class VisualizerStars : public VisualizerBase {
    private:
     struct Star {
-        int16_t x;       // Позиция X * 256 (fixed-point)
-        int16_t y;       // Позиция Y * 256
-        int16_t speedX;  // Скорость X * 256
-        int16_t speedY;  // Скорость Y * 256
+        int16_t x;      // Позиция X * 256 (fixed-point)
+        int16_t y;      // Позиция Y * 256
+        int16_t speedX; // Скорость X * 256
+        int16_t speedY; // Скорость Y * 256
         uint8_t brightness;
         uint8_t trailLength;
         bool active;
@@ -28,4 +28,4 @@ class VisualizerStars : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_STARS_H
+#endif // VISUALIZER_STARS_H

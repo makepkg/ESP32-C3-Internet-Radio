@@ -7,7 +7,7 @@
 // Визуализатор: Круговой (лучи из центра)
 class VisualizerCircle : public VisualizerBase {
    private:
-    int smoothedBands[16] = {0};  // Сглаженные значения для плавности
+    int smoothedBands[16] = {0}; // Сглаженные значения для плавности
 
    public:
     void draw(Adafruit_SSD1306& display, int* bands, int bandCount) override;
@@ -16,4 +16,4 @@ class VisualizerCircle : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_CIRCLE_H
+#endif // VISUALIZER_CIRCLE_H

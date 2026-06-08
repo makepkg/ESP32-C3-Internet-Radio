@@ -5,8 +5,8 @@
 #include "string_utils.h"
 
 #define LOG_FILE "/log.txt"
-#define MAX_LOG_SIZE 20480     // 20KB - максимальный размер лог-файла
-#define MAX_LOG_RESPONSE 8192  // 8KB - максимум для веб-ответа
+#define MAX_LOG_SIZE 20480    // 20KB - максимальный размер лог-файла
+#define MAX_LOG_RESPONSE 8192 // 8KB - максимум для веб-ответа
 
 void setup_logging() {
     clear_logs();
@@ -65,7 +65,7 @@ String get_logs() {
     if (fileSize > MAX_LOG_RESPONSE) {
         char truncMsg[64];
         snprintf(truncMsg, sizeof(truncMsg), "[...обрезано %dKB...]\n", (fileSize - MAX_LOG_RESPONSE) / 1024);
-        logs = String(truncMsg) + logs;  // Одна конкатенация вместо трех
+        logs = String(truncMsg) + logs; // Одна конкатенация вместо трех
     }
 
     return logs;

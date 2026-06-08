@@ -12,7 +12,7 @@ VisualizerTesseract::VisualizerTesseract() {
     angleYZ = 0;
 
     // Начальные скорости
-    speedXY = 180;  // ~0.7 градуса/кадр
+    speedXY = 180; // ~0.7 градуса/кадр
     speedXZ = 120;
     speedXW = 90;
     speedYZ = 150;
@@ -136,7 +136,7 @@ VisualizerTesseract::Vertex2D VisualizerTesseract::project3Dto2D(const Vertex3D&
 
     // Защита от деления на 0 и отрицательного масштаба
     float denominator = distance + v.z;
-    if (denominator < 0.1f) denominator = 0.1f;  // Минимальный знаменатель
+    if (denominator < 0.1f) denominator = 0.1f; // Минимальный знаменатель
 
     float scale = distance / denominator;
 
@@ -161,16 +161,16 @@ void IRAM_ATTR VisualizerTesseract::draw(Adafruit_SSD1306& display, int* bands, 
     // === 2. ПЛАВНОЕ ВРАЩЕНИЕ (ПОСТОЯННЫЕ СКОРОСТИ) ===
     // Каждая плоскость вращается с своей скоростью
     // Не зависит от музыки - плавное плавание
-    angleXY += speedXY;  // ~0.7°/кадр
-    angleXZ += speedXZ;  // ~0.5°/кадр
-    angleXW += speedXW;  // ~0.35°/кадр (4D!)
-    angleYZ += speedYZ;  // ~0.6°/кадр
+    angleXY += speedXY; // ~0.7°/кадр
+    angleXZ += speedXZ; // ~0.5°/кадр
+    angleXW += speedXW; // ~0.35°/кадр (4D!)
+    angleYZ += speedYZ; // ~0.6°/кадр
 
     // === 3. ВРАЩАЕМ И ПРОЕЦИРУЕМ ВЕРШИНЫ ===
     Vertex2D projectedVertices[VERTEX_COUNT];
 
     // Постоянное расстояние для 4D→3D проекции
-    float wDistance = 3.0f;  // Оптимальный размер
+    float wDistance = 3.0f; // Оптимальный размер
 
     for (int i = 0; i < VERTEX_COUNT; i++) {
         // Вращение в 4D

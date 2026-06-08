@@ -31,10 +31,10 @@ class VisualizerTesseract : public VisualizerBase {
     int edges[EDGE_COUNT][2];
 
     // Углы вращения в разных плоскостях (фиксированная точка * 256)
-    int16_t angleXY;  // Вращение в плоскости XY
-    int16_t angleXZ;  // Вращение в плоскости XZ
-    int16_t angleXW;  // Вращение в плоскости XW (4D!)
-    int16_t angleYZ;  // Вращение в плоскости YZ
+    int16_t angleXY; // Вращение в плоскости XY
+    int16_t angleXZ; // Вращение в плоскости XZ
+    int16_t angleXW; // Вращение в плоскости XW (4D!)
+    int16_t angleYZ; // Вращение в плоскости YZ
 
     // Скорости вращения (зависят от музыки)
     int16_t speedXY;
@@ -69,4 +69,4 @@ class VisualizerTesseract : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_TESSERACT_H
+#endif // VISUALIZER_TESSERACT_H

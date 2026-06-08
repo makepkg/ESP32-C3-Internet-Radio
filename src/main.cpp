@@ -14,16 +14,16 @@
 // Типы команд от веб-интерфейса
 enum CommandType {
     CMD_NONE = 0,
-    CMD_VOLUME,        // Изменить громкость
-    CMD_NEXT_STATION,  // Следующая станция
-    CMD_PREV_STATION,  // Предыдущая станция
-    CMD_REBOOT,        // Перезагрузка
-    CMD_SAVE_STATIONS  // Сохранить конфигурацию станций
+    CMD_VOLUME,       // Изменить громкость
+    CMD_NEXT_STATION, // Следующая станция
+    CMD_PREV_STATION, // Предыдущая станция
+    CMD_REBOOT,       // Перезагрузка
+    CMD_SAVE_STATIONS // Сохранить конфигурацию станций
 };
 
 struct SystemCommand {
     CommandType type;
-    float floatValue;  // Для CMD_VOLUME
+    float floatValue; // Для CMD_VOLUME
 };
 
 // Очередь команд (потокобезопасная)
@@ -74,7 +74,7 @@ void setup() {
     check_power_stability();
 
     setup_filesystem();
-    setup_logging();  // Инициализируем и очищаем логи
+    setup_logging(); // Инициализируем и очищаем логи
 
     // Инициализация очереди команд FreeRTOS
     commandQueue = xQueueCreate(COMMAND_QUEUE_SIZE, sizeof(SystemCommand));
@@ -100,7 +100,7 @@ void setup() {
         currentStation = 0;
     }
 
-    save_state();  // Сохраняем инкрементированный rebootCounter и поправленный currentStation
+    save_state(); // Сохраняем инкрементированный rebootCounter и поправленный currentStation
 
     // Применяем загруженный стиль визуализатора
     visualizerManager.setStyle(visualizerStyle);
@@ -114,13 +114,13 @@ void setup() {
         systemState = STATE_STA;
         log_message("Подключено к WiFi. Запуск в режиме станции (STA).");
         setup_audio();
-        start_web_server_sta();  // Запускаем веб-сервер для управления станциями
+        start_web_server_sta(); // Запускаем веб-сервер для управления станциями
     } else {
         // --- РЕЖИМ НАСТРОЙКИ (AP) ---
         systemState = STATE_AP;
         log_message("Не удалось подключиться к WiFi. Запуск в режиме точки доступа (AP).");
         setup_ap_mode();
-        start_web_server_ap();  // Запускаем веб-сервер для настройки WiFi
+        start_web_server_ap(); // Запускаем веб-сервер для настройки WiFi
     }
 
     reset_inactivity_timer();
@@ -182,7 +182,7 @@ void loop() {
     } else {
         htmlLoadStartTime = 0;
         if (systemState == STATE_STA) {
-            loop_audio();  // Без задержек!
+            loop_audio(); // Без задержек!
         }
     }
 
@@ -218,5 +218,5 @@ void loop() {
     }
 
     // НЕТ delay()! Максимальная скорость для audio!
-    yield();  // Даем время WiFi/веб-серверу
+    yield(); // Даем время WiFi/веб-серверу
 }

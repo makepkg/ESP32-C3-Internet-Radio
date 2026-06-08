@@ -7,7 +7,7 @@
 // Визуализатор: Вертикальные полосы с gravity effect
 class VisualizerBars : public VisualizerBase {
    private:
-    int displayBands[16] = {0};  // Текущая высота для плавной анимации
+    int displayBands[16] = {0}; // Текущая высота для плавной анимации
 
    public:
     void draw(Adafruit_SSD1306& display, int* bands, int bandCount) override;
@@ -16,4 +16,4 @@ class VisualizerBars : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_BARS_H
+#endif // VISUALIZER_BARS_H

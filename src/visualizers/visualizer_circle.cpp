@@ -3,8 +3,8 @@
 #include "../trig_tables.h"
 
 void IRAM_ATTR VisualizerCircle::draw(Adafruit_SSD1306& display, int* bands, int bandCount) {
-    const int centerX = SCREEN_WIDTH / 2;   // 64
-    const int centerY = SCREEN_HEIGHT / 2;  // 16
+    const int centerX = SCREEN_WIDTH / 2;  // 64
+    const int centerY = SCREEN_HEIGHT / 2; // 16
 
     // Максимальный радиус - до края экрана (по диагонали)
     // sqrt(64^2 + 16^2) ≈ 66, округляем до 70 для запаса

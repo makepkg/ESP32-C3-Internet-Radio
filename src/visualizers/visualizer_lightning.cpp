@@ -9,7 +9,7 @@ VisualizerLightning::VisualizerLightning() {
     }
 
     // Стартовые позиции эмиттеров (центр экрана)
-    leftPointY_current = (SCREEN_HEIGHT / 2) << 8;  // * 256
+    leftPointY_current = (SCREEN_HEIGHT / 2) << 8; // * 256
     leftPointY_target = leftPointY_current;
     rightPointY_current = (SCREEN_HEIGHT / 2) << 8;
     rightPointY_target = rightPointY_current;
@@ -47,15 +47,15 @@ void IRAM_ATTR VisualizerLightning::draw(Adafruit_SSD1306& display, int* bands, 
 
     // === 3. ГЕНЕРИРУЕМ НОВЫЕ МОЛНИИ ===
     // Частота генерации зависит от энергии
-    int spawnChance = map(avgAmp, 0, SCREEN_HEIGHT, 10, 2);  // 10% -> 50%
+    int spawnChance = map(avgAmp, 0, SCREEN_HEIGHT, 10, 2); // 10% -> 50%
 
     if (frameCounter % spawnChance == 0 || avgAmp > SCREEN_HEIGHT * 0.7) {
         // Ищем свободный слот
         for (int i = 0; i < MAX_BOLTS; i++) {
             if (!bolts[i].active) {
-                int x1 = 4;                        // Левый край с отступом
-                int y1 = leftPointY_current >> 8;  // / 256
-                int x2 = SCREEN_WIDTH - 4;         // Правый край с отступом
+                int x1 = 4;                       // Левый край с отступом
+                int y1 = leftPointY_current >> 8; // / 256
+                int x2 = SCREEN_WIDTH - 4;        // Правый край с отступом
                 int y2 = rightPointY_current >> 8;
 
                 generateBolt(i, x1, y1, x2, y2, avgAmp, false);
@@ -80,7 +80,7 @@ void IRAM_ATTR VisualizerLightning::draw(Adafruit_SSD1306& display, int* bands, 
         if (bolts[i].active) {
             // Затухание
             if (bolts[i].brightness > 20) {
-                bolts[i].brightness -= 18;  // Быстрое затухание (~4-5 кадров)
+                bolts[i].brightness -= 18; // Быстрое затухание (~4-5 кадров)
             } else {
                 bolts[i].active = false;
                 continue;
@@ -122,7 +122,7 @@ void VisualizerLightning::generateBolt(int boltIndex, int x1, int y1, int x2, in
 
     // Яркость зависит от энергии
     bolt.brightness = map(energy, 0, SCREEN_HEIGHT, 150, 255);
-    if (isBranch) bolt.brightness = bolt.brightness * 0.7;  // Ветвления тусклее
+    if (isBranch) bolt.brightness = bolt.brightness * 0.7; // Ветвления тусклее
 
     bolt.lifetime = 0;
     bolt.isBranch = isBranch;
@@ -161,7 +161,7 @@ void VisualizerLightning::subdivideBolt(Segment* points, int& count, int startId
     int perpY = dx;
 
     // Нормализуем и применяем displacement
-    int len = abs(perpX) + abs(perpY);  // Приблизительная длина (Manhattan)
+    int len = abs(perpX) + abs(perpY); // Приблизительная длина (Manhattan)
     if (len > 0) {
         perpX = (perpX * displacement * 256) / len;
         perpY = (perpY * displacement * 256) / len;
@@ -189,7 +189,7 @@ void VisualizerLightning::subdivideBolt(Segment* points, int& count, int startId
 void VisualizerLightning::drawBolt(Adafruit_SSD1306& display, LightningBolt& bolt) {
     // Рисуем все сегменты молнии
     for (int i = 0; i < bolt.segmentCount - 1; i++) {
-        int x1 = bolt.points[i].x >> 8;  // / 256
+        int x1 = bolt.points[i].x >> 8; // / 256
         int y1 = bolt.points[i].y >> 8;
         int x2 = bolt.points[i + 1].x >> 8;
         int y2 = bolt.points[i + 1].y >> 8;

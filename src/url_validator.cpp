@@ -69,9 +69,9 @@ String extractHostname(const String& url) {
     // Убираем протокол
     int startIdx = 0;
     if (url.startsWith("http://")) {
-        startIdx = 7;  // length of "http://"
+        startIdx = 7; // length of "http://"
     } else if (url.startsWith("https://")) {
-        startIdx = 8;  // length of "https://"
+        startIdx = 8; // length of "https://"
     } else {
         return "";
     }
@@ -91,7 +91,7 @@ String extractHostname(const String& url) {
     }
 
     String hostname = url.substring(startIdx, endIdx);
-    hostname.toLowerCase();  // Hostname case-insensitive
+    hostname.toLowerCase(); // Hostname case-insensitive
 
     return hostname;
 }

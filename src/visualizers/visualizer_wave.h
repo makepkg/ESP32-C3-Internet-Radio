@@ -7,8 +7,8 @@
 // Визуализатор: Прокручивающаяся волна слева направо
 class VisualizerWave : public VisualizerBase {
    private:
-    int waveHistory[SCREEN_WIDTH] = {0};  // История амплитуд для каждого пикселя
-    int writePos = 0;                     // Текущая позиция записи
+    int waveHistory[SCREEN_WIDTH] = {0}; // История амплитуд для каждого пикселя
+    int writePos = 0;                    // Текущая позиция записи
 
    public:
     void draw(Adafruit_SSD1306& display, int* bands, int bandCount) override;
@@ -17,4 +17,4 @@ class VisualizerWave : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_WAVE_H
+#endif // VISUALIZER_WAVE_H

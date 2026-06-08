@@ -42,7 +42,7 @@ static bool isAuthenticated = false;
 String generateSessionToken() {
     const char* chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     String token = "";
-    token.reserve(SESSION_TOKEN_LENGTH);  // Предварительное выделение памяти
+    token.reserve(SESSION_TOKEN_LENGTH); // Предварительное выделение памяти
     for (int i = 0; i < SESSION_TOKEN_LENGTH; i++) {
         token += chars[random(0, 62)];
     }
@@ -323,7 +323,7 @@ void start_web_server_sta() {
                 // Генерируем session token ТОЛЬКО если его нет
                 if (sessionToken.length() == 0) {
                     sessionToken = generateSessionToken();
-                    save_state();  // Сохраняем токен
+                    save_state(); // Сохраняем токен
                     Serial.println("🆕 Session token создан.");
                 } else {
                     Serial.println("♻️ Используем существующий session token.");
@@ -462,7 +462,7 @@ void start_web_server_sta() {
             stations.push_back({name, url, true});
             STATIONS_UNLOCK();
 
-            sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
+            sendSaveStationsCommand(); // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "OK");
         } else {
             request->send(400, "text/plain", "Bad Request");
@@ -481,7 +481,7 @@ void start_web_server_sta() {
                 stations.end());
             STATIONS_UNLOCK();
 
-            sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
+            sendSaveStationsCommand(); // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "OK");
         } else {
             request->send(400, "text/plain", "Bad Request");
@@ -511,7 +511,7 @@ void start_web_server_sta() {
                     break;
                 }
             }
-            sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
+            sendSaveStationsCommand(); // ✅ Через FreeRTOS Queue
             request->send(200, "text/plain", "OK");
         } else {
             request->send(400, "text/plain", "Bad Request");
@@ -564,7 +564,7 @@ void start_web_server_sta() {
             uint8_t rotation = request->getParam("rotation", true)->value().toInt();
             if (rotation == 0 || rotation == 2) {
                 set_display_rotation(rotation);
-                save_state();  // Сохраняем настройку
+                save_state(); // Сохраняем настройку
                 request->send(200, "text/plain", "OK");
             } else {
                 request->send(400, "text/plain", "Invalid rotation value");
@@ -746,7 +746,7 @@ void start_web_server_sta() {
                 }
                 STATIONS_UNLOCK();
 
-                sendSaveStationsCommand();  // ✅ Через FreeRTOS Queue
+                sendSaveStationsCommand(); // ✅ Через FreeRTOS Queue
                 request->send(200, "text/plain", "Order saved");
             } else {
                 STATIONS_UNLOCK();

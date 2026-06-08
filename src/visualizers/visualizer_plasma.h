@@ -8,10 +8,10 @@
 class VisualizerPlasma : public VisualizerBase {
    private:
     // Фазы волн (инкрементируются каждый кадр)
-    int16_t phase1;  // Горизонтальная волна
-    int16_t phase2;  // Вертикальная волна
-    int16_t phase3;  // Диагональная волна
-    int16_t phase4;  // Радиальная волна
+    int16_t phase1; // Горизонтальная волна
+    int16_t phase2; // Вертикальная волна
+    int16_t phase3; // Диагональная волна
+    int16_t phase4; // Радиальная волна
 
     // Скорости волн (зависят от музыки)
     int16_t speed1;
@@ -46,4 +46,4 @@ class VisualizerPlasma : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_PLASMA_H
+#endif // VISUALIZER_PLASMA_H

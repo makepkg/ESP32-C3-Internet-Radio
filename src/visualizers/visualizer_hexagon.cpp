@@ -36,9 +36,9 @@ void IRAM_ATTR VisualizerHexagon::draw(Adafruit_SSD1306& display, int* bands, in
 
     // Плавное изменение количества колец
     if (targetRings > currentRings) {
-        currentRings++;  // Быстрый рост
+        currentRings++; // Быстрый рост
     } else if (targetRings < currentRings) {
-        currentRings--;  // Плавное уменьшение
+        currentRings--; // Плавное уменьшение
     }
     currentRings = constrain(currentRings, 1, 6);
 
@@ -47,8 +47,8 @@ void IRAM_ATTR VisualizerHexagon::draw(Adafruit_SSD1306& display, int* bands, in
 
     // Рисуем концентрические гексагоны (соты)
     // Размер каждого кольца увеличивается
-    int baseSize = 4;  // Базовый размер
-    int sizeStep = 5;  // Шаг увеличения размера
+    int baseSize = 4; // Базовый размер
+    int sizeStep = 5; // Шаг увеличения размера
 
     for (int ring = 1; ring <= currentRings; ring++) {
         int hexSize = baseSize + (ring - 1) * sizeStep;

@@ -10,7 +10,7 @@ enum AudioState {
     AUDIO_IDLE,
     AUDIO_CONNECTING,
     AUDIO_STARTING,
-    AUDIO_BUFFERING,  // Предварительная буферизация
+    AUDIO_BUFFERING, // Предварительная буферизация
     AUDIO_PLAYING,
     AUDIO_ERROR
 };
@@ -30,4 +30,4 @@ void previous_station();
 void set_volume(float new_volume);
 void force_audio_reset();
 
-#endif  // AUDIO_MANAGER_H
+#endif // AUDIO_MANAGER_H

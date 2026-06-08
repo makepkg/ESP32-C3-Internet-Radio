@@ -7,8 +7,8 @@
 // Визуализатор: Гексагональные соты (как в улье)
 class VisualizerHexagon : public VisualizerBase {
    private:
-    int currentRings = 0;  // Текущее количество колец сот
-    int targetRings = 0;   // Целевое количество колец
+    int currentRings = 0; // Текущее количество колец сот
+    int targetRings = 0;  // Целевое количество колец
 
     // Вспомогательная функция для рисования гексагона
     void drawHexagon(Adafruit_SSD1306& display, int centerX, int centerY, int size);
@@ -20,4 +20,4 @@ class VisualizerHexagon : public VisualizerBase {
     }
 };
 
-#endif  // VISUALIZER_HEXAGON_H
+#endif // VISUALIZER_HEXAGON_H

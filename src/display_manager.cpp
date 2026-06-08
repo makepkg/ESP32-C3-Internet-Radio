@@ -58,7 +58,7 @@ void setup_display() {
     displayInitialized = true;
     Serial.printf("✅ OLED инициализирован успешно (0x3C, %dkHz)\n", I2C_FAST_MODE_FREQ / 1000);
 
-    display.setRotation(displayRotation);  // Применяем сохраненную настройку
+    display.setRotation(displayRotation); // Применяем сохраненную настройку
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
@@ -70,10 +70,10 @@ void setup_display() {
 
 // ⚠️ Попытка переинициализации OLED (вызывается из loop)
 void try_reinit_display() {
-    if (displayInitialized) return;  // Уже инициализирован
+    if (displayInitialized) return; // Уже инициализирован
 
     unsigned long now = millis();
-    if (now - lastDisplayInitAttempt < I2C_RETRY_INTERVAL) return;  // Еще не прошло I2C_RETRY_INTERVAL
+    if (now - lastDisplayInitAttempt < I2C_RETRY_INTERVAL) return; // Еще не прошло I2C_RETRY_INTERVAL
 
     lastDisplayInitAttempt = now;
     Serial.println("🔄 Попытка переинициализации OLED...");
@@ -81,7 +81,7 @@ void try_reinit_display() {
     // 🛡️ GRACEFUL CLEANUP: очищаем I2C шину перед реинициализацией
     // Предотвращаем конфликты с предыдущими командами
     Wire.end();
-    delay(100);  // Даем время на очистку I2Cбуферов
+    delay(100); // Даем время на очистку I2Cбуферов
     Wire.begin(OLED_SDA, OLED_SCL);
     Wire.setClock(I2C_FAST_MODE_FREQ);
 
@@ -101,7 +101,7 @@ void try_reinit_display() {
 void IRAM_ATTR loop_display() {
     // ⚠️ Проверка инициализации и попытка восстановления
     try_reinit_display();
-    if (!displayInitialized) return;  // Дисплей не готов, пропускаем отрисовку
+    if (!displayInitialized) return; // Дисплей не готов, пропускаем отрисовку
 
     // Плавное изменение громкости для анимации
     if (abs(displayVolume - volume) > 0.01) {
@@ -149,7 +149,7 @@ void reset_inactivity_timer() {
 void set_display_mode_ap(String ip) {
     currentDisplayMode = AP_MODE;
     ap_ip_address = ip;
-    loop_display();  // Обновить экран сразу
+    loop_display(); // Обновить экран сразу
 }
 
 void show_shutdown_progress(float progress) {
@@ -343,7 +343,7 @@ void draw_ip_display_screen() {
     } else {
         // Auto-continuing - show countdown
         unsigned long remaining = ip_display_duration - (millis() - ip_display_start_time);
-        if (remaining > ip_display_duration) remaining = 0;  // Overflow protection
+        if (remaining > ip_display_duration) remaining = 0; // Overflow protection
 
         String hint = "Starting in " + String(remaining / 1000 + 1) + "s";
         display.setTextSize(1);
