@@ -72,6 +72,9 @@ bool load_wifi_config() {
     JsonObject obj = doc.as<JsonObject>();
     wifiConfig.ssid = obj["ssid"].as<String>();
     wifiConfig.password = obj["password"].as<String>();
+    wifiConfig.fallbackSsid = obj["fallback_ssid"] | String("");
+    wifiConfig.fallbackPassword = obj["fallback_password"] | String("");
+    wifiConfig.fallbackEnabled = obj["fallback_enabled"] | false;
     
     if (wifiConfig.ssid.isEmpty()) {
         Serial.println("Пустой SSID в wifi.json");
@@ -94,6 +97,9 @@ bool save_wifi_config() {
     
     obj["ssid"] = wifiConfig.ssid;
     obj["password"] = wifiConfig.password;
+    obj["fallback_ssid"] = wifiConfig.fallbackSsid;
+    obj["fallback_password"] = wifiConfig.fallbackPassword;
+    obj["fallback_enabled"] = wifiConfig.fallbackEnabled;
 
     if (serializeJson(doc, configFile) == 0) {
         Serial.println("Ошибка записи в wifi.json.");

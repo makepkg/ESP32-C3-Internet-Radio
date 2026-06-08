@@ -649,6 +649,49 @@ void start_web_server_sta() {
     });
 
     // --- API логов ---
+    server.on("/api/wifi/fallback", HTTP_GET, [](AsyncWebServerRequest *request){
+        if (!isAuthenticated) return request->send(401);
+        
+        JsonDocument doc;
+        doc["fallback_enabled"] = wifiConfig.fallbackEnabled;
+        doc["fallback_ssid"] = wifiConfig.fallbackSsid;
+        // Пароль не возвращаем — только признак наличия
+        doc["fallback_has_password"] = !wifiConfig.fallbackPassword.isEmpty();
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    server.on("/api/wifi/fallback", HTTP_POST, [](AsyncWebServerRequest *request){
+        if (!isAuthenticated) return request->send(401);
+    }, nullptr, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, data, len);
+        
+        if (error) {
+            request->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+            return;
+        }
+        
+        if (doc["fallback_enabled"].is<bool>()) {
+            wifiConfig.fallbackEnabled = doc["fallback_enabled"].as<bool>();
+        }
+        if (doc["fallback_ssid"].is<String>()) {
+            wifiConfig.fallbackSsid = doc["fallback_ssid"].as<String>();
+        }
+        if (doc["fallback_password"].is<String>()) {
+            wifiConfig.fallbackPassword = doc["fallback_password"].as<String>();
+        }
+        
+        if (save_wifi_config()) {
+            request->send(200, "application/json", "{\"status\":\"ok\"}");
+        } else {
+            request->send(500, "application/json", "{\"error\":\"Save failed\"}");
+        }
+    });
+
+    // --- API логов ---
     server.on("/api/logs", HTTP_GET, [](AsyncWebServerRequest *request){
         if (!isAuthenticated) return request->send(401);
         request->send(200, "text/plain", get_logs());

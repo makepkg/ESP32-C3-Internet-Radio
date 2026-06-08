@@ -6,7 +6,8 @@ enum WiFiRecoveryState {
     WIFI_OK,                    // WiFi работает нормально
     WIFI_AUTO_RECONNECTING,     // Ждем автоматического переподключения (0-40s)
     WIFI_MANUAL_RECONNECTING,   // Ручное переподключение через connect_to_wifi (40-90s)
-    WIFI_FAILED_REBOOTING       // Переподключение не удалось, перезагрузка (5s countdown)
+    WIFI_FAILED_REBOOTING,      // Переподключение не удалось, перезагрузка (5s countdown)
+    WIFI_FALLBACK_CONNECTING    // Попытка подключения к fallback сети
 };
 
 extern WiFiRecoveryState wifiRecoveryState;
