@@ -5,7 +5,8 @@
 ![Hero Shot](assets/images/hero-complete-device.jpg)
 *Professional ESP32-C3 Internet Radio with OLED Display and Visualizer*
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build](https://github.com/makepkg/ESP32-C3-Internet-Radio/workflows/Build/badge.svg)](https://github.com/makepkg/ESP32-C3-Internet-Radio/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-Ready-orange.svg)](https://platformio.org/)
 [![ESP32-C3](https://img.shields.io/badge/ESP32--C3-RISC--V-blue.svg)](https://www.espressif.com/en/products/socs/esp32-c3)
 
@@ -66,6 +67,9 @@
 
 ![Web Settings](assets/images/webui-settings.png)
 *System configuration page with all settings*
+
+![WiFi Diagnostics](assets/images/webui-wifi-status.png)
+*WiFi diagnostics and signal monitoring*
 
 ### OLED Visualizer in Action
 ![Visualizer Animation](assets/images/visualizer-demo.gif)
@@ -881,13 +885,15 @@ if radio.login("admin", "secret"):
   - Power save disabled (for streaming)
   - Maximum transmitter power (19.5dBm)
   - Automatic reconnect
+  - Fallback WiFi network support (optional backup credentials)
 
 ### 🛡️ Protection and Recovery:
 
-**WiFi Recovery (3-level system):**
+**WiFi Recovery (4-level system):**
 1. **Auto-reconnect (0-40s):** Wait for WiFi.setAutoReconnect()
-2. **Manual reconnect (40-90s):** Force reconnection
-3. **Reboot (5s countdown):** If all else fails
+2. **Manual reconnect (40-90s):** Force reconnection to primary network
+3. **Fallback network (optional):** Automatic switch to backup WiFi if primary fails
+4. **Reboot (5s countdown):** If all recovery attempts fail
 
 **Brown-out Detector:**
 - Trigger threshold: 2.51V
@@ -914,11 +920,28 @@ if radio.login("admin", "secret"):
 - **Type:** LittleFS
 - **Size:** 1440KB
 - **Files:**
-  - `/wifi.json` - WiFi credentials
+  - `/wifi.json` - WiFi credentials (primary + fallback)
   - `/stations.json` - Radio station list (up to 25)
   - `/credentials.json` - Web interface login/password (SHA256)
   - `/state.json` - State (volume, station, visualizer)
   - `/log.txt` - System logs (20KB rotation)
+
+**WiFi Configuration Format (`/wifi.json`):**
+```json
+{
+  "ssid": "Primary_Network",
+  "password": "primary_password",
+  "fallback_ssid": "Backup_Network",
+  "fallback_password": "backup_password",
+  "fallback_enabled": true
+}
+```
+
+**Notes:**
+- `fallback_ssid` and `fallback_password` are optional backup WiFi credentials
+- If `fallback_enabled` is `true` and primary network fails, device automatically switches to fallback network
+- Fallback network is attempted after manual reconnection fails (at ~90s mark)
+- If both networks fail, device reboots after 5-second countdown
 
 ### Libraries Used:
 - **ESP8266Audio** - MP3 decoder + I2S
@@ -1293,11 +1316,14 @@ If you like this project and want to support its development, you can do so in t
 
 **Cryptocurrency Donations:**
 
-- **TetherUSD (USDT) BEP-20 (Binance Smart Chain):**  
-  `0x4f85f29892b261fa8029f3cfd64211e166744733`
+- **USDT BEP-20 (Binance Smart Chain):**  
+  `0xd03499C9c6100Af624603b4D6fb185A65694745C`
 
-- **TetherUSD (USDT) TRC-20 (Tron):**  
-  `TDnjDg9HxySo1J2FPSrvWQejyZ4gHKiXSJ`
+- **USDT TRC-20 (Tron):**  
+  `TUAzeSrKeDYbt6HCs9PL6q1t5amHHdnnwR`
+
+- **USDT SOL (Solana):**  
+  `2cecCCh8pzUNmEpjLQ3aa9sfPL5KXqANrmSfiiDWubCj`
 
 Your support is very important and helps me continue working on open-source projects!
 
@@ -1309,6 +1335,24 @@ Your support is very important and helps me continue working on open-source proj
 ---
 
 **Version:** v4.5 (Stable Architecture)  
-**Last Update:** 2025-10-15  
-**License:** MIT  
+**Last Update:** 2025-01-08  
+**License:** [MIT](LICENSE)  
 **Author:** [makepkg](https://github.com/makepkg)
+
+---
+
+## 📚 Documentation
+
+### 👤 For Users
+- [📖 User Manual](docs/user/USER_MANUAL.md) — Complete usage guide
+- [🔧 Build Guide](docs/user/BUILD_GUIDE.md) — Hardware assembly instructions
+- [🚀 Quick Start](docs/user/QUICK_START.md) — Firmware installation
+- [🔀 WiFi Fallback Guide](docs/user/WIFI_FALLBACK_GUIDE.md) — Backup network setup
+
+### 👨‍💻 For Developers
+- [📝 Changelog](CHANGELOG.md) — Version history
+- [🤝 Contributing](CONTRIBUTING.md) — How to contribute
+- [🔒 Security Policy](SECURITY.md) — Reporting vulnerabilities
+- [📡 WiFi Credentials](docs/dev/WIFI_CREDENTIALS_RESEARCH.md) — Storage implementation
+- [🔄 WiFi Recovery Flow](docs/dev/WIFI_RECONNECT_FLOW_RESEARCH.md) — State machine details
+- [🌐 WiFi Web Handlers](docs/dev/WIFI_WEB_HANDLERS_RESEARCH.md) — API implementation

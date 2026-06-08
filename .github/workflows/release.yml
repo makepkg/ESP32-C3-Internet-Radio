@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggered on version tags like v4.5.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build Release Firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PlatformIO Core
+        run: pip install platformio
+
+      - name: Build firmware
+        run: pio run
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          cp .pio/build/esp32-c3-devkitm-1/firmware.bin release/firmware-${{ steps.version.outputs.VERSION }}.bin
+          cp .pio/build/esp32-c3-devkitm-1/partitions.bin release/partitions-${{ steps.version.outputs.VERSION }}.bin || true
+          cp .pio/build/esp32-c3-devkitm-1/bootloader.bin release/bootloader-${{ steps.version.outputs.VERSION }}.bin || true
+          
+          # Create flash script
+          cat > release/flash.sh << 'EOF'
+          #!/bin/bash
+          # ESP32-C3 Internet Radio Flash Script
+          
+          PORT=${1:-/dev/ttyUSB0}
+          
+          echo "Flashing ESP32-C3 Internet Radio..."
+          echo "Port: $PORT"
+          
+          esptool.py --chip esp32c3 --port $PORT --baud 460800 \
+            --before default_reset --after hard_reset write_flash \
+            -z --flash_mode dio --flash_freq 80m --flash_size 4MB \
+            0x0000 bootloader-*.bin \
+            0x8000 partitions-*.bin \
+            0x10000 firmware-*.bin
+          
+          echo "Done! Press reset button on ESP32-C3"
+          EOF
+          chmod +x release/flash.sh
+          
+          # Create README for release
+          cat > release/README.md << 'EOF'
+          # ESP32-C3 Internet Radio - Release Files
+          
+          ## Quick Flash
+          
+          ### Windows
+          ```cmd
+          esptool.py --chip esp32c3 --port COM3 --baud 460800 write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB 0x10000 firmware-*.bin
+          ```
+          
+          ### Linux/macOS
+          ```bash
+          ./flash.sh /dev/ttyUSB0
+          ```
+          
+          ## Files
+          
+          - `firmware-*.bin` - Main firmware
+          - `bootloader-*.bin` - ESP32-C3 bootloader
+          - `partitions-*.bin` - Partition table
+          - `flash.sh` - Automated flash script
+          
+          ## Requirements
+          
+          - Python 3.7+
+          - esptool.py (`pip install esptool`)
+          - ESP32-C3-DevKitM-1
+          
+          ## Documentation
+          
+          See full documentation at: https://github.com/makepkg/ESP32-C3-Internet-Radio
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## ESP32-C3 Internet Radio v${{ steps.version.outputs.VERSION }}
+            
+            ### 📦 Installation
+            
+            **Quick flash (firmware only):**
+            ```bash
+            esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
+              write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB \
+              0x10000 firmware-${{ steps.version.outputs.VERSION }}.bin
+            ```
+            
+            **Full flash (recommended for first install):**
+            Download all files and run `flash.sh`
+            
+            ### 📝 Changelog
+            
+            See [CHANGELOG.md](https://github.com/makepkg/ESP32-C3-Internet-Radio/blob/main/CHANGELOG.md)
+            
+            ### 🔧 Hardware
+            
+            - ESP32-C3-DevKitM-1
+            - SSD1306 OLED 128x64 (I2C)
+            - KY-040 Rotary Encoder
+            - MAX98357A I2S Amplifier
+            
+            ### 📖 Documentation
+            
+            - [User Manual](https://github.com/makepkg/ESP32-C3-Internet-Radio/blob/main/docs/user/USER_MANUAL.md)
+            - [Quick Start](https://github.com/makepkg/ESP32-C3-Internet-Radio/blob/main/docs/user/QUICK_START.md)
+            - [Wiring Diagram](https://github.com/makepkg/ESP32-C3-Internet-Radio#wiring)
+            
+          files: |
+            release/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

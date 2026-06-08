@@ -109,6 +109,9 @@
 struct WiFiCredentials {
     String ssid;
     String password;
+    String fallbackSsid;
+    String fallbackPassword;
+    bool fallbackEnabled = false;
 };
 
 extern WiFiCredentials wifiConfig;  // Одна WiFi сеть (без backup)

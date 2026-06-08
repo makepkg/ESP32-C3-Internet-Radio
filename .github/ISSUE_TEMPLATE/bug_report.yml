@@ -1,0 +1,86 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out as much as possible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: "When I do X, Y happens instead of Z..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce the issue?
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Firmware version
+      description: Found in the web interface under System or in the serial monitor at boot.
+      placeholder: "v4.5"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: ESP32-C3 board
+      options:
+        - ESP32-C3-DevKitM-1 (recommended)
+        - ESP32-C3-DevKitC-02
+        - Other (describe in Additional context)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue_area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Audio / Streaming
+        - OLED Display / Visualizer
+        - Web Interface
+        - WiFi / Network
+        - Rotary Encoder
+        - Power / Deep Sleep
+        - Build / Flashing
+        - Other
+
+  - type: textarea
+    id: serial_log
+    attributes:
+      label: Serial monitor output
+      description: Paste relevant logs from `pio device monitor -b 115200`. Remove sensitive info (WiFi passwords, etc.)
+      render: text
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else — photos, environment, power supply specs, etc.

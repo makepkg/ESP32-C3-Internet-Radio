@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussion / Question
+    url: https://github.com/makepkg/ESP32-C3-Internet-Radio/discussions
+    about: Ask questions and discuss the project here
+  - name: 📖 Documentation
+    url: https://github.com/makepkg/ESP32-C3-Internet-Radio#readme
+    about: Check the README first — your answer may already be there

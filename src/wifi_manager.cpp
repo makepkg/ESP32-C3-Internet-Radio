@@ -22,6 +22,39 @@ static unsigned long lastAutoReconnectCheck = 0;
 static int rebootCountdown = 0;
 static unsigned long lastRebootCountdownUpdate = 0;
 
+static bool fallbackAttempted = false;
+
+bool connect_to_wifi_fallback() {
+    if (wifiConfig.fallbackSsid.isEmpty()) {
+        log_message("❌ Fallback SSID пустой.");
+        return false;
+    }
+
+    WiFi.mode(WIFI_STA);
+    WiFi.setSleep(false);
+    WiFi.setAutoReconnect(true);
+    WiFi.setTxPower(WIFI_POWER_19_5dBm);
+
+    show_message("Fallback WiFi:", wifiConfig.fallbackSsid);
+    log_message("🔀 Попытка подключения к fallback сети: " + wifiConfig.fallbackSsid);
+
+    WiFi.begin(wifiConfig.fallbackSsid.c_str(), wifiConfig.fallbackPassword.c_str());
+
+    unsigned long startTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < WIFI_CONNECTION_TIMEOUT) {
+        yield();
+        delay(10);
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+        log_message("✅ Подключено к fallback сети: " + wifiConfig.fallbackSsid);
+        return true;
+    }
+
+    log_message("❌ Не удалось подключиться к fallback сети.");
+    return false;
+}
+
 bool connect_to_wifi() {
     if (wifiConfig.ssid.isEmpty()) {
         log_message("Конфигурация WiFi отсутствует. Запуск точки доступа.");
@@ -165,17 +198,27 @@ void handle_wifi_recovery() {
                 return;
             }
             
-            // Не удалось - переходим к перезагрузке
-            wifiRecoveryState = WIFI_FAILED_REBOOTING;
-            rebootCountdown = WIFI_REBOOT_COUNTDOWN;
-            lastRebootCountdownUpdate = millis();
-            log_message(formatString("❌ Ручное переподключение не удалось. Перезагрузка через %d сек...", rebootCountdown));
+            // Не удалось - проверяем fallback
+            if (wifiConfig.fallbackEnabled && !wifiConfig.fallbackSsid.isEmpty() && !fallbackAttempted) {
+                wifiRecoveryState = WIFI_FALLBACK_CONNECTING;
+                log_message("🔀 Основная сеть недоступна. Переключение на fallback...");
+            } else {
+                wifiRecoveryState = WIFI_FAILED_REBOOTING;
+                rebootCountdown = WIFI_REBOOT_COUNTDOWN;
+                lastRebootCountdownUpdate = millis();
+                log_message(formatString("❌ Ручное переподключение не удалось. Перезагрузка через %d сек...", rebootCountdown));
+            }
         } else {
-            // Таймаут - переходим к перезагрузке
-            wifiRecoveryState = WIFI_FAILED_REBOOTING;
-            rebootCountdown = WIFI_REBOOT_COUNTDOWN;
-            lastRebootCountdownUpdate = millis();
-            log_message(formatString("❌ Таймаут ручного переподключения. Перезагрузка через %d сек...", rebootCountdown));
+            // Таймаут - проверяем fallback
+            if (wifiConfig.fallbackEnabled && !wifiConfig.fallbackSsid.isEmpty() && !fallbackAttempted) {
+                wifiRecoveryState = WIFI_FALLBACK_CONNECTING;
+                log_message("🔀 Таймаут основной сети. Переключение на fallback...");
+            } else {
+                wifiRecoveryState = WIFI_FAILED_REBOOTING;
+                rebootCountdown = WIFI_REBOOT_COUNTDOWN;
+                lastRebootCountdownUpdate = millis();
+                log_message(formatString("❌ Таймаут ручного переподключения. Перезагрузка через %d сек...", rebootCountdown));
+            }
         }
         return;
     }
@@ -196,6 +239,24 @@ void handle_wifi_recovery() {
                 delay(500);
                 ESP.restart();
             }
+        }
+        return;
+    }
+
+    // === УРОВЕНЬ 3.5: Fallback WiFi ===
+    if (wifiRecoveryState == WIFI_FALLBACK_CONNECTING) {
+        fallbackAttempted = true;
+        
+        if (connect_to_wifi_fallback()) {
+            wifiRecoveryState = WIFI_OK;
+            log_message("✅ WiFi восстановлен через fallback сеть!");
+            show_ip_address(WiFi.localIP().toString(), 2000);
+            reset_inactivity_timer();
+        } else {
+            wifiRecoveryState = WIFI_FAILED_REBOOTING;
+            rebootCountdown = WIFI_REBOOT_COUNTDOWN;
+            lastRebootCountdownUpdate = millis();
+            log_message(formatString("❌ Fallback подключение не удалось. Перезагрузка через %d сек...", rebootCountdown));
         }
         return;
     }

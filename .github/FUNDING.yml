@@ -1,0 +1,19 @@
+# ===================================
+# GitHub Sponsors Configuration
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+# ===================================
+
+# GitHub Sponsors
+github: # makepkg  # Раскомментируйте и добавьте ваш username если есть GitHub Sponsors
+
+# Другие платформы (раскомментируйте нужные)
+# patreon: your_username
+# open_collective: your_project
+# ko_fi: your_username
+# tidelift: npm/package-name
+# community_bridge: project-name
+# liberapay: your_username
+# issuehunt: your_username
+# otechie: your_username
+# lfx_crowdfunding: project-name
+# custom: ["https://www.buymeacoffee.com/your_username", "https://paypal.me/your_username"]

@@ -1,0 +1,42 @@
+# ===================================
+# Dependabot Configuration
+# Auto-update dependencies and GitHub Actions
+# ===================================
+
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "makepkg"  # Замените на ваш username
+    open-pull-requests-limit: 5
+
+  # PlatformIO (через pip requirements, если есть)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "platformio"
+    reviewers:
+      - "makepkg"  # Замените на ваш username
+    open-pull-requests-limit: 3
+    # Игнорировать определённые обновления
+    ignore:
+      - dependency-name: "platformio"
+        update-types: ["version-update:semver-major"]

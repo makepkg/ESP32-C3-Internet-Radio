@@ -1,0 +1,35 @@
+# ===================================
+# CODEOWNERS
+# Define who is responsible for code review
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ===================================
+
+# Default owner for everything
+* @makepkg
+
+# Core firmware files
+/src/**/*.cpp @makepkg
+/src/**/*.h @makepkg
+/include/** @makepkg
+
+# Visualizers
+/src/visualizers/** @makepkg
+
+# Web interface
+/data/*.html @makepkg
+/data/*.css @makepkg
+/data/*.js @makepkg
+
+# Configuration
+/platformio.ini @makepkg
+/partitions.csv @makepkg
+
+# Documentation
+/docs/** @makepkg
+*.md @makepkg
+
+# GitHub workflows
+/.github/** @makepkg
+
+# Build system
+/.pio/ @makepkg

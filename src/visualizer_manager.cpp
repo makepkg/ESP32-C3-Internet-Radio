@@ -8,6 +8,9 @@
 #include "visualizers/visualizer_lightning.h"
 #include "visualizers/visualizer_tesseract.h"
 #include "visualizers/visualizer_plasma.h"
+#include "visualizers/visualizer_holo_grid.h"
+#include "visualizers/visualizer_omni_scan.h"
+
 
 // Глобальный экземпляр
 VisualizerManager visualizerManager;
@@ -60,6 +63,12 @@ VisualizerBase* VisualizerManager::getVisualizer(VisualizerStyle style) {
             case STYLE_PLASMA:
                 visualizers[style] = new VisualizerPlasma();
                 break;
+            case STYLE_HOLO_GRID:
+                visualizers[style] = new VisualizerHoloGrid();
+                break;
+            case STYLE_OMNI_SCAN:
+                visualizers[style] = new VisualizerOmniScan();
+                break;
         }
     }
     return visualizers[style];
@@ -94,6 +103,8 @@ const char* VisualizerManager::getStyleName(VisualizerStyle style) {
         case STYLE_LIGHTNING: return "Lightning";
         case STYLE_TESSERACT: return "Tesseract";
         case STYLE_PLASMA: return "Plasma";
+        case STYLE_HOLO_GRID: return "Holo Grid";
+        case STYLE_OMNI_SCAN: return "Omni Scan";
         default: return "Unknown";
     }
 }

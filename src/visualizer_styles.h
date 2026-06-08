@@ -13,10 +13,12 @@ enum VisualizerStyle : uint8_t {
     STYLE_MIRROR = 5,    // Зеркальные полосы
     STYLE_LIGHTNING = 6, // Молнии между точками
     STYLE_TESSERACT = 7, // 4D гиперкуб (тессеракт)
-    STYLE_PLASMA = 8     // Жидкая плазма (интерференция волн)
+    STYLE_PLASMA = 8,    // Жидкая плазма (интерференция волн)
+    STYLE_HOLO_GRID = 9,   // Голографическая сетка (sci-fi перспектива)
+    STYLE_OMNI_SCAN = 10   // Omni-Tool сканер (Mass Effect)
 };
 
 // Количество доступных стилей
-#define VISUALIZER_STYLE_COUNT 9
+#define VISUALIZER_STYLE_COUNT 11
 
 #endif // VISUALIZER_STYLES_H

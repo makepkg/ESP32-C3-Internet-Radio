@@ -1,0 +1,55 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - '**.cpp'
+      - '**.h'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - '**.cpp'
+      - '**.h'
+
+jobs:
+  clang-format:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Run clang-format
+        run: |
+          find src include -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+
+  cppcheck:
+    name: Static Analysis (cppcheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            --error-exitcode=1 --quiet \
+            --inline-suppr \
+            src/ include/

@@ -163,7 +163,30 @@
 
             <!-- Опасная зона -->
             <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; border-left: 4px solid #ff6b6b;">
-                <h3 style="color: #ff6b6b; margin-top: 0; margin-bottom: 10px;">⚠️ <span data-i18n="settings.danger.title">Опасная зона</span></h3>
+                <h3 style="color: #bb86fc; margin-top: 0; margin-bottom: 10px;">📶 <span data-i18n="settings.fallback.title">Резервная WiFi сеть</span></h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="fallbackEnabled" onchange="onFallbackToggle(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span data-i18n="settings.fallback.enable">Включить резервную сеть</span>
+                </label>
+                <div id="fallbackFields" style="display: none; flex-direction: column; gap: 10px;">
+                    <input type="text" id="fallbackSsid" placeholder="Резервный SSID"
+                        style="padding: 10px; background: #2a2a2a; border: 2px solid #555; border-radius: 6px; color: #e0e0e0; font-size: 14px;">
+                    <div style="position: relative;">
+                        <input type="password" id="fallbackPassword" placeholder="Резервный пароль"
+                            style="padding: 10px; width: 100%; box-sizing: border-box; background: #2a2a2a; border: 2px solid #555; border-radius: 6px; color: #e0e0e0; font-size: 14px;">
+                        <span onclick="toggleFallbackPwd()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;">👁</span>
+                    </div>
+                    <button onclick="saveFallbackWifi()"
+                        style="padding: 10px 20px; background: #6200ea; border: none; border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer;">
+                        <span data-i18n="common.save">Сохранить</span>
+                    </button>
+                    <span id="fallbackStatus" style="color: #48bb78; font-size: 14px; display: none;">✓ <span data-i18n="common.applied">Применено</span></span>
+                </div>
+            </div>
+
+            <!-- Опасная зона -->
+            <h3 style="color: #ff6b6b; margin-top: 0; margin-bottom: 10px;">⚠️ <span data-i18n="settings.danger.title">Опасная зона</span></h3>
                 <p style="color: #a0a0a0; font-size: 14px; margin-bottom: 15px;" data-i18n="settings.danger.description">
                     Factory Reset удалит ВСЕ настройки и вернет устройство к заводским настройкам.
                 </p>
@@ -809,6 +832,52 @@
             }, 2000);
         }
 
+        // === FALLBACK WIFI ===
+        async function loadFallbackWifi() {
+            try {
+                const res = await fetch('/api/wifi/fallback');
+                if (!res.ok) return;
+                const data = await res.json();
+                document.getElementById('fallbackEnabled').checked = data.fallback_enabled;
+                document.getElementById('fallbackSsid').value = data.fallback_ssid || '';
+                document.getElementById('fallbackFields').style.display = data.fallback_enabled ? 'flex' : 'none';
+            } catch(e) { console.error('Fallback load error:', e); }
+        }
+
+        function onFallbackToggle(enabled) {
+            document.getElementById('fallbackFields').style.display = enabled ? 'flex' : 'none';
+            if (!enabled) saveFallbackWifi();
+        }
+
+        function toggleFallbackPwd() {
+            const el = document.getElementById('fallbackPassword');
+            el.type = el.type === 'password' ? 'text' : 'password';
+        }
+
+        async function saveFallbackWifi() {
+            const enabled = document.getElementById('fallbackEnabled').checked;
+            const ssid = document.getElementById('fallbackSsid').value.trim();
+            const password = document.getElementById('fallbackPassword').value;
+            
+            const body = { fallback_enabled: enabled };
+            if (ssid) body.fallback_ssid = ssid;
+            if (password) body.fallback_password = password;
+            
+            try {
+                const res = await fetch('/api/wifi/fallback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (res.ok) {
+                    const st = document.getElementById('fallbackStatus');
+                    st.style.display = 'inline';
+                    setTimeout(() => st.style.display = 'none', 2000);
+                }
+            } catch(e) { console.error('Fallback save error:', e); }
+        }
+
         window.onload = () => {
             // Загрузка сохраненного языка
             document.getElementById('langToggle').checked = (currentLang === 'en');
@@ -817,6 +886,7 @@
             loadStations();
             loadDisplayRotation();
             loadVisualizerStyles();
+            loadFallbackWifi();
             // Логи НЕ загружаются автоматически - только по чекбоксу!
         };
     </script>
