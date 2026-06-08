@@ -1,10 +1,12 @@
-#include <Wire.h>
+#include "display_manager.h"
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
-#include "config.h"
-#include "display_manager.h"
+#include <Wire.h>
+
 #include "audio_manager.h"
+#include "config.h"
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 DisplayMode currentDisplayMode = INFO;
@@ -39,23 +41,23 @@ static unsigned long lastDisplayInitAttempt = 0;
 
 void setup_display() {
     Wire.begin(OLED_SDA, OLED_SCL);
-    
+
     // ⚡ Fast Mode I2C (I2C_FAST_MODE_FREQ) для уменьшения времени блокировки
     // Стандартный режим: 100 kHz (~10-15ms на кадр)
     // Fast Mode: 400 kHz (~3-5ms на кадр)
     Wire.setClock(I2C_FAST_MODE_FREQ);
     Serial.printf("⚡ I2C Fast Mode: %d Hz\n", I2C_FAST_MODE_FREQ);
-    
+
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
         Serial.printf("⚠️ ОЛЕД не найден! Повторные попытки каждые %d мс...\n", I2C_RETRY_INTERVAL);
         displayInitialized = false;
         lastDisplayInitAttempt = millis();
         return;
     }
-    
+
     displayInitialized = true;
     Serial.printf("✅ OLED инициализирован успешно (0x3C, %dkHz)\n", I2C_FAST_MODE_FREQ / 1000);
-    
+
     display.setRotation(displayRotation); // Применяем сохраненную настройку
     display.clearDisplay();
     display.setTextSize(1);
@@ -69,20 +71,20 @@ void setup_display() {
 // ⚠️ Попытка переинициализации OLED (вызывается из loop)
 void try_reinit_display() {
     if (displayInitialized) return; // Уже инициализирован
-    
+
     unsigned long now = millis();
     if (now - lastDisplayInitAttempt < I2C_RETRY_INTERVAL) return; // Еще не прошло I2C_RETRY_INTERVAL
-    
+
     lastDisplayInitAttempt = now;
     Serial.println("🔄 Попытка переинициализации OLED...");
-    
+
     // 🛡️ GRACEFUL CLEANUP: очищаем I2C шину перед реинициализацией
     // Предотвращаем конфликты с предыдущими командами
     Wire.end();
     delay(100); // Даем время на очистку I2Cбуферов
     Wire.begin(OLED_SDA, OLED_SCL);
     Wire.setClock(I2C_FAST_MODE_FREQ);
-    
+
     if (display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
         displayInitialized = true;
         Serial.println("✅ OLED инициализирован после повторной попытки!");
@@ -100,7 +102,7 @@ void IRAM_ATTR loop_display() {
     // ⚠️ Проверка инициализации и попытка восстановления
     try_reinit_display();
     if (!displayInitialized) return; // Дисплей не готов, пропускаем отрисовку
-    
+
     // Плавное изменение громкости для анимации
     if (abs(displayVolume - volume) > 0.01) {
         displayVolume += (volume - displayVolume) * 0.2;
@@ -165,7 +167,7 @@ void show_message(const String& line1, const String& line2, int delay_ms) {
     message_line1 = line1;
     message_line2 = line2;
     currentDisplayMode = MESSAGE;
-    loop_display(); 
+    loop_display();
     if (delay_ms > 0) delay(delay_ms);
 }
 
@@ -208,7 +210,7 @@ void draw_info_screen() {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
-    
+
     // Название станции или IP адрес
     if (!stations.empty()) {
         display.setCursor(0, 0);
@@ -217,7 +219,7 @@ void draw_info_screen() {
         // Нет станций - показываем IP адрес
         display.setCursor(0, 0);
         display.print("No stations");
-        
+
         if (WiFi.status() == WL_CONNECTED) {
             display.setCursor(0, 10);
             display.print("IP:");
@@ -225,7 +227,7 @@ void draw_info_screen() {
             display.print(WiFi.localIP().toString());
         }
     }
-    
+
     // Статус WiFi (только если есть станции)
     if (!stations.empty() && WiFi.status() == WL_CONNECTED) {
         String rssi_str = String(WiFi.RSSI()) + "dBm";
@@ -248,7 +250,7 @@ void draw_info_screen() {
             display.fillRoundRect(bar_x + 2, bar_y + 2, fill_w, bar_h - 4, corner_radius - 1, SSD1306_WHITE);
         }
     }
-    
+
     display.display();
 }
 
@@ -256,7 +258,7 @@ void draw_shutdown_screen() {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
-    
+
     String text = "Shutting down...";
     display.setCursor((SCREEN_WIDTH - text.length() * 6) / 2, 8);
     display.print(text);
@@ -267,7 +269,7 @@ void draw_shutdown_screen() {
     int bar_h = 8;
     display.drawRect(bar_x, bar_y, bar_w, bar_h, SSD1306_WHITE);
     display.fillRect(bar_x, bar_y, (int)(bar_w * shutdownProgress), bar_h, SSD1306_WHITE);
-    
+
     display.display();
 }
 
@@ -309,30 +311,30 @@ void draw_ip_display_screen() {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
-    
+
     // Title
     String title = "WiFi Connected!";
     display.setCursor((SCREEN_WIDTH - title.length() * 6) / 2, 0);
     display.println(title);
-    
+
     // IP Address centered
     display.setTextSize(1);
     int ip_x = (SCREEN_WIDTH - ip_display_address.length() * 6) / 2;
     display.setCursor(ip_x, 14);
     display.println(ip_display_address);
-    
+
     // If paused - show loader animation and hint
     if (ip_display_paused) {
         // Animated spinner
         static uint8_t spinnerFrame = 0;
         const char spinner[] = {'|', '/', '-', '\\'};
         spinnerFrame = (millis() / 150) % 4;
-        
+
         // Draw spinner
         display.setTextSize(2);
         display.setCursor(SCREEN_WIDTH / 2 - 6, 24);
         display.print(spinner[spinnerFrame]);
-        
+
         // Hint text
         display.setTextSize(1);
         String hint = "Click to continue";
@@ -342,12 +344,12 @@ void draw_ip_display_screen() {
         // Auto-continuing - show countdown
         unsigned long remaining = ip_display_duration - (millis() - ip_display_start_time);
         if (remaining > ip_display_duration) remaining = 0; // Overflow protection
-        
+
         String hint = "Starting in " + String(remaining / 1000 + 1) + "s";
         display.setTextSize(1);
         display.setCursor((SCREEN_WIDTH - hint.length() * 6) / 2, 50);
         display.println(hint);
-        
+
         // Progress bar
         int bar_w = 100;
         int bar_x = (SCREEN_WIDTH - bar_w) / 2;
@@ -355,11 +357,11 @@ void draw_ip_display_screen() {
         int bar_h = 4;
         float progress = (float)(millis() - ip_display_start_time) / ip_display_duration;
         if (progress > 1.0) progress = 1.0;
-        
+
         display.drawRect(bar_x, bar_y, bar_w, bar_h, SSD1306_WHITE);
         display.fillRect(bar_x, bar_y, (int)(bar_w * progress), bar_h, SSD1306_WHITE);
     }
-    
+
     display.display();
 }
 

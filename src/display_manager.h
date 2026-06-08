@@ -1,16 +1,17 @@
 #ifndef DISPLAY_MANAGER_H
 #define DISPLAY_MANAGER_H
 
+#include <Arduino.h>
+
 #include "config.h"
 #include "visualizer_manager.h"
-#include <Arduino.h>
 
 enum DisplayMode {
     INFO,
     VISUALIZER,
     AP_MODE,
     MESSAGE,
-    IP_DISPLAY,         // IP address with pause capability
+    IP_DISPLAY, // IP address with pause capability
     SHUTDOWN_ANIM
 };
 
@@ -24,8 +25,8 @@ void reset_inactivity_timer();
 void set_display_mode_ap(String ip);
 void show_message(const String& line1, const String& line2 = "", int delay_ms = 0);
 void show_ip_address(const String& ip, unsigned long display_time_ms = 2000);
-void pause_ip_display();    // Pause on IP screen
-void resume_ip_display();   // Continue to audio
+void pause_ip_display(); // Pause on IP screen
+void resume_ip_display(); // Continue to audio
 bool is_ip_display_active();
 bool is_ip_display_paused();
 void show_shutdown_progress(float progress);

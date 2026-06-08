@@ -2,6 +2,7 @@
 #define AUDIO_MANAGER_H
 
 #include <Arduino.h>
+
 #include <atomic>
 
 // Состояния аудио системы
@@ -9,7 +10,7 @@ enum AudioState {
     AUDIO_IDLE,
     AUDIO_CONNECTING,
     AUDIO_STARTING,
-    AUDIO_BUFFERING,    // Предварительная буферизация
+    AUDIO_BUFFERING, // Предварительная буферизация
     AUDIO_PLAYING,
     AUDIO_ERROR
 };
