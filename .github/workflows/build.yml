@@ -49,7 +49,7 @@ jobs:
         run: pio run
 
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-${{ github.sha }}
           path: .pio/build/*/firmware.bin
