@@ -1,11 +1,11 @@
-# 📻 ESP32-C3 Internet Radio v4.5
+# 📻 ESP32-C3 Internet Radio v4.6
 
 <div align="center">
 
 ![Hero Shot](assets/images/hero-complete-device.jpg)
 *Professional ESP32-C3 Internet Radio with OLED Display and Visualizer*
 
-[![Build](https://github.com/makepkg/ESP32-C3-Internet-Radio/workflows/Build/badge.svg)](https://github.com/makepkg/ESP32-C3-Internet-Radio/actions)
+[![Build](https://github.com/makepkg/ESP32-C3-Internet-Radio/actions/workflows/main.yml/badge.svg)](https://github.com/makepkg/ESP32-C3-Internet-Radio/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-Ready-orange.svg)](https://platformio.org/)
 [![ESP32-C3](https://img.shields.io/badge/ESP32--C3-RISC--V-blue.svg)](https://www.espressif.com/en/products/socs/esp32-c3)
